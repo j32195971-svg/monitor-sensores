@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InduSense | Monitoramento Industrial</title>
+<style>
+:root{
+  --bg:#0b1220;--panel:#111b2e;--panel2:#17243a;--line:#263752;
+  --text:#edf4ff;--muted:#8fa3bf;--accent:#42d3a5;--blue:#5b8cff;
+  --warning:#f6c85f;--danger:#ff6b7a;--shadow:0 20px 60px rgba(0,0,0,.28)
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;min-width:1100px}
+button,input{font:inherit}
+button{cursor:pointer;border:0}
+.hidden{display:none!important}
+.status-dot{width:13px;height:13px;border-radius:50%;display:inline-block;margin-right:8px;box-shadow:0 0 12px currentColor}.status-normal{color:#42d3a5;background:#42d3a5}.status-alerta{color:#f6c85f;background:#f6c85f}.status-perigo{color:#ff6b7a;background:#ff6b7a}.status-line{display:flex;align-items:center;margin-top:18px;font-size:12px;font-weight:700}.metric-status{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;font-weight:700}.metric-status .status-dot{width:9px;height:9px;margin-right:0;box-shadow:0 0 8px currentColor}.history-panel{display:none}.history-panel.active{display:block}.chart-grid{display:grid;grid-template-columns:1fr;gap:18px}.chart-card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:20px}.chart-wrap{height:300px;position:relative}.history-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.peak{color:var(--muted);font-size:12px;margin-top:10px}
+.login-screen{min-height:100vh;display:grid;grid-template-columns:1.1fr .9fr}
+.login-visual{padding:70px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(circle at 15% 15%,#203a65 0,transparent 38%),linear-gradient(145deg,#0d1729,#0a101c)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.08em}
+.brand-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--blue));display:grid;place-items:center;color:#07111e;font-weight:900}
+.login-visual h1{font-size:58px;line-height:1.03;max-width:650px;margin:0 0 24px}
+.login-visual p{max-width:570px;color:var(--muted);font-size:18px;line-height:1.7}
+.visual-footer{color:#637895;font-size:13px}
+.login-panel{display:flex;align-items:center;justify-content:center;padding:50px;background:#0f1929}
+.login-box{width:390px}
+.login-box h2{font-size:32px;margin:0 0 10px}
+.login-box .subtitle{color:var(--muted);margin:0 0 34px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:13px;color:#a9bad1;margin-bottom:8px}
+.field input{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:10px;background:#0b1423;color:var(--text);outline:none}
+.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #5b8cff22}
+.primary{width:100%;padding:14px;border-radius:10px;background:linear-gradient(90deg,var(--blue),#769cff);color:white;font-weight:700}
+.error{color:var(--danger);font-size:13px;margin-top:14px;min-height:18px}
+.demo-note{margin-top:28px;padding:14px;border:1px solid #30425e;border-radius:10px;color:var(--muted);font-size:12px;line-height:1.6}
+.app{min-height:100vh}
+.topbar{height:76px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 34px;background:#0e1828}
+.topbar-left{display:flex;align-items:center;gap:28px}
+.page-title{font-size:18px;font-weight:700}
+.live-pill{display:flex;align-items:center;gap:8px;color:#a8b9ce;font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px #42d3a522}
+.topbar-right{display:flex;align-items:center;gap:20px;color:var(--muted);font-size:13px}
+.logout{padding:9px 14px;border-radius:8px;background:#1b2940;color:#c9d7ea}
+.layout{display:grid;grid-template-columns:245px 1fr}
+.sidebar{border-right:1px solid var(--line);min-height:calc(100vh - 76px);padding:28px 18px;background:#0d1727}
+.side-label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#637895;margin:0 12px 14px}
+.nav-item{width:100%;padding:13px 14px;border-radius:9px;color:#9db0c9;background:transparent;text-align:left;margin-bottom:6px}
+.nav-item.active,.nav-item:hover{background:#1b2a43;color:#fff}
+.main{padding:32px 38px 50px;max-width:1500px}
+.heading-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);font-weight:700}
+h1{font-size:32px;margin:8px 0 0}
+.subheading{color:var(--muted);margin-top:8px}
+.overview{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.stat-top{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+.stat-value{font-size:30px;font-weight:750;margin-top:13px}
+.stat-foot{font-size:12px;color:#6f86a5;margin-top:8px}
+.section-title{font-size:16px;margin:0 0 15px}
+.machine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+.machine{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:20px;transition:.25s ease;cursor:pointer}
+.machine:hover{transform:translateY(-2px);border-color:#3b5274}
+.machine-grid.has-focus{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,minmax(0,1fr));align-items:stretch}
+.machine-grid.has-focus .machine.selected{grid-column:1;grid-row:1 / span 3}
+.machine-grid.has-focus .machine:not(.selected){grid-column:2}
+.machine-grid.has-focus .machine:not(.selected):nth-of-type(1){grid-row:1}
+.machine-grid.has-focus .machine:not(.selected):nth-of-type(2){grid-row:2}
+.machine-grid.has-focus .machine:not(.selected):nth-of-type(3){grid-row:3}
+.machine-grid.has-focus .machine:not(.selected):nth-of-type(4){grid-row:1}
+.machine-grid.has-focus .machine:not(.selected):nth-of-type(5){grid-row:2}
+.machine-grid.has-focus .machine:not(.selected):nth-of-type(6){grid-row:3}
+.machine-grid.has-focus .machine.selected .machine-name{font-size:24px}
+.machine-grid.has-focus .machine.selected .metric-value{font-size:32px}
+.machine-grid.has-focus .machine.selected .metric{padding:18px 14px}
+.machine-grid.has-focus .machine.selected .metrics{gap:14px;margin-top:30px}
+.machine.real{border-color:#3b6c68;box-shadow:0 0 0 1px #42d3a51a inset}
+.machine-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.machine-name{font-size:17px;font-weight:750}
+.machine-code{font-size:11px;color:#6f86a5;margin-top:5px}
+.badge{font-size:11px;padding:6px 9px;border-radius:999px;white-space:nowrap}
+.badge.online{background:#143d38;color:#67e0bd}
+.badge.simulated{background:#26334a;color:#a9bce0}
+.badge.offline{background:#40242c;color:#ff9ba7}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px}
+.metric{background:var(--panel2);border-radius:10px;padding:13px 10px}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:8px}
+.metric-value{font-size:21px;font-weight:750}
+.metric-unit{font-size:11px;color:#7890ad;margin-left:3px}
+.machine-footer{border-top:1px solid var(--line);margin-top:20px;padding-top:15px;display:flex;justify-content:space-between;color:#7086a3;font-size:11px}
+.real-tag{color:var(--accent)}
+@media(max-width:1250px){.machine-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<section id="loginScreen" class="login-screen">
+  <div class="login-visual">
+    <div class="brand"><div class="brand-mark">IS</div> INDUSENSE</div>
+    <div>
+      <div class="eyebrow">Monitoramento industrial</div>
+      <h1>EXPOTEC SENAI 2026, TURMA DE OPERAÇÃO DE MÁQUINAS.</h1>
+      <p>Acompanhe temperatura, vibração e ruído das máquinas em tempo real, com uma interface centralizada para sua operação. Integrantes: Danilo Rocha, Diego, Rafael e Samuel</p>
+    </div>
+    <div class="visual-footer">Sistema de supervisão • Ambiente protegido</div>
+  </div>
+  <div class="login-panel">
+    <div class="login-box">
+      <h2>Fazer Login</h2>
+      <p class="subtitle">Use suas credenciais para acessar o monitoramento.</p>
+      <form id="loginForm">
+        <div class="field"><label for="email">E-mail</label><input id="email" type="email" placeholder="Email" required></div>
+        <div class="field"><label for="password">Senha</label><input id="password" type="password" placeholder="Senha" required></div>
+        <button class="primary" type="submit">Entrar</button>
+        <div id="loginError" class="error"></div>
+      </form>
+      <div class="demo-note">Sistema de Monitoramento Industrial desenvolvido pela turma de Operação de Máquinas e Ferramentas convencinais da unidade Senai CFP Alvimar Carneiro de Rezende com o objetivo de apresentar nossa ideia de inovação para a indústria.</div>
+    </div>
+  </div>
+</section>
+
+<section id="app" class="app hidden">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand"><div class="brand-mark">IS</div> INDUSENSE</div>
+      <div class="page-title">Central de monitoramento</div>
+      <div class="live-pill"><span class="dot"></span> Sistema operacional</div>
+    </div>
+    <div class="topbar-right"><span id="userEmail">usuário</span><button id="logoutBtn" class="logout">Sair</button></div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-label">Navegação</div>
+      <button class="nav-item active" id="overviewNav">Visão geral</button>
+      <button class="nav-item" id="machinesNav">Máquinas</button>
+      <button class="nav-item" id="historyNav">Histórico</button>
+      <div class="side-label" style="margin-top:35px">Conexão</div>
+      <div style="padding:12px;color:#7086a3;font-size:12px;line-height:1.7">Sistema de Monitoramento<br><span style="color:#67e0bd">● Conectado</span></div>
+    </aside>
+    <main class="main">
+      <div class="heading-row">
+        <div><div class="eyebrow">Visão geral</div><h1>Parque de máquinas</h1><div class="subheading">Acompanhamento operacional das máquinas cadastradas.</div></div>
+        <div style="color:#7890ad;font-size:12px">Atualização automática</div>
+      </div>
+      <div class="overview">
+        <div class="stat"><div class="stat-top"><span>Máquinas cadastradas</span><span>▦</span></div><div id="totalMachines" class="stat-value">6</div><div class="stat-foot">Ativas no painel</div></div>
+        <div class="stat"><div class="stat-top"><span>Conectadas ao Sistema</span><span>↗</span></div><div id="connectedMachines" class="stat-value">1</div><div class="stat-foot">Leitura em tempo real</div></div>
+        <div class="stat"><div class="stat-top"><span>Temperatura média</span><span>°C</span></div><div id="avgTemp" class="stat-value">--</div><div class="stat-foot">Entre as máquinas simuladas</div></div>
+        <div class="stat"><div class="stat-top"><span>Última atualização</span><span>◷</span></div><div id="lastUpdate" class="stat-value" style="font-size:22px">--:--:--</div><div class="stat-foot">Dados do painel</div></div>
+      </div>
+      <h2 class="section-title">Máquinas cadastradas</h2>
+      <div id="machineGrid" class="machine-grid"></div>
+      <section id="machinesPanel" class="history-panel">
+        <div class="history-toolbar"><div><div class="eyebrow">Cadastro técnico</div><h1>Características dos maquinários</h1><div class="subheading">Informações de identificação e especificações cadastradas.</div></div></div>
+        <div class="chart-grid">
+<div class="chart-card"><h2 class="section-title">Fresadora 01</h2><div style="line-height:1.9;color:#a9bad1;font-size:14px"><b>Fabricante/modelo:</b> KONE KFE-3/BR<br><b>Aplicação:</b> fresagem, rasgos, superfícies planas e fabricação de ferramentas<br><b>Mesa:</b> 300 × 1.300 mm<br><b>Cursos X/Y/Z:</b> 900 / 300 / 420 mm<br><b>Rotação do eixo-árvore:</b> 60 a 4.200 rpm<br><b>Cone:</b> ISO 40<br><b>Motor do eixo-árvore:</b> 5 cv<br><b>Peso aproximado:</b> 1.700 kg</div></div>
+<div class="chart-card"><h2 class="section-title">Fresadora 02</h2><div style="line-height:1.9;color:#a9bad1;font-size:14px"><b>Fabricante/modelo:</b> KONE KFE-3/BR<br><b>Aplicação:</b> fresagem convencional e operações de ferramentaria<br><b>Mesa:</b> 300 × 1.300 mm<br><b>Cursos X/Y/Z:</b> 900 / 300 / 420 mm<br><b>Rotação:</b> 60 a 4.200 rpm<br><b>Cone:</b> ISO 40<br><b>Motor:</b> 5 cv<br><b>Observação:</b></div></div>
+<div class="chart-card"><h2 class="section-title">Ferramenteira 04</h2><div style="line-height:1.9;color:#a9bad1;font-size:14px"><b>Fabricante:</b> KONE<br><b>Modelo:</b> KFE-3/BR<br><b>Aplicação:</b> fabricação e acabamento de ferramentas, rasgos e superfícies<br><b>Mesa:</b> 300 × 1.300 mm; 3 ranhuras de 14 mm<br><b>Cursos:</b> longitudinal 900 mm; transversal 300 mm; vertical 420 mm<br><b>Rotação do eixo-árvore:</b> 60 a 4.200 rpm<br><b>Cone:</b> ISO 40<br><b>Motor principal:</b> 5 cv<br><b>Avanços automáticos:</b> X/Y 24–630 mm/min; vertical 35–470 mm/min<br><b>Peso:</b> aproximadamente 1.700 kg</div></div>
+<div class="chart-card"><h2 class="section-title">Torno Mecânico 03</h2><div style="line-height:1.9;color:#a9bad1;font-size:14px"><b>Fabricante:</b> ROMI<br><b>Modelo:</b> T 240<br><b>Ano:</b> 2011<br><b>Velocidade:</b> 44 a 2.240 rpm; 20 velocidades<br><b>Motor principal:</b> 7,5 cv<br><b>Altura de pontas:</b> 220 mm<br><b>Diâmetro sobre o barramento:</b> 455 mm<br><b>Diâmetro sobre o carro transversal:</b> 240 mm<br><b>Distância entre pontas:</b> 500 ou 1.000 mm<br><b>Furo do eixo-árvore:</b> 52 mm</div></div>
+<div class="chart-card"><h2 class="section-title">Torno Mecânico 05</h2><div style="line-height:1.9;color:#a9bad1;font-size:14px"><b>Fabricante/modelo:</b> ROMI Tormax 30<br><b>Aplicação:</b> torneamento, faceamento, abertura de roscas e manutenção<br><b>Rotação:</b> 45 a 2.240 rpm<br><b>Motor principal:</b> 7,5 cv<br><b>Furo do eixo-árvore:</b> 50 mm<br><b>Nariz da árvore:</b> ASA L0<br><b>Observação:</b></div></div>
+<div class="chart-card"><h2 class="section-title">Fresadora 07</h2><div style="line-height:1.9;color:#a9bad1;font-size:14px"><b>Fabricante/modelo:</b> KONE KFE-3/BR<br><b>Aplicação:</b> fresagem convencional e ferramentaria<br><b>Mesa:</b> 300 × 1.300 mm<br><b>Cursos X/Y/Z:</b> 900 / 300 / 420 mm<br><b>Rotação:</b> 60 a 4.200 rpm<br><b>Cone:</b> ISO 40<br><b>Motor do eixo-árvore:</b> 5 cv</div></div>
+</div></section>
+        <section id="historyPanel" class="history-panel">
+        <div class="history-toolbar"><div><div class="eyebrow">Histórico operacional</div><h1>Temperatura, vibração e ruído</h1><div class="subheading" id="historyRange"></div></div><button class="logout" id="backOverview">← Voltar</button></div>
+        <div class="chart-grid"><div class="chart-card"><h2 class="section-title">Temperatura por máquina</h2><div class="chart-wrap"><canvas id="tempChart"></canvas></div><div class="peak" id="tempPeak"></div></div><div class="chart-card"><h2 class="section-title">Vibração por máquina</h2><div class="chart-wrap"><canvas id="vibChart"></canvas></div><div class="peak" id="vibPeak"></div></div><div class="chart-card"><h2 class="section-title">Ruído por máquina</h2><div class="chart-wrap"><canvas id="noiseChart"></canvas></div><div class="peak" id="noisePeak"></div></div></div>
+      </section>
+    </main>
+  </div>
+</section>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD-stbeo7N_vBsyNa3FFILrz5PyNlHKQuE",
+  authDomain: "monitor-sensores-b1be1.firebaseapp.com",
+  databaseURL: "https://monitor-sensores-b1be1-default-rtdb.firebaseio.com",
+  projectId: "monitor-sensores-b1be1",
+  storageBucket: "monitor-sensores-b1be1.firebasestorage.app",
+  messagingSenderId: "225709909415",
+  appId: "1:225709909415:web:5f1024f6a0e88bc5288282",
+  measurementId: "G-978HLXLFYQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const database = getDatabase(app);
+
+const machines = [
+  {id:"fresadora01", name:"Fresadora 01", real:false},
+  {id:"fresadora02", name:"Fresadora 02", real:true},
+  {id:"ferramenteira04", name:"Ferramenteira 04", real:false},
+  {id:"tornomecanico03", name:"Torno Mecânico 03", real:false},
+  {id:"tornomecanico05", name:"Torno Mecânico 05", real:false},
+  {id:"fresadora07", name:"Fresadora 07", real:false}
+];
+
+const simulated = {};
+machines.filter(m=>!m.real).forEach((m,i)=>{
+  simulated[m.id] = {
+    temperatura: 22 + i * 0.8 + Math.random() * 2.5,
+    vibracao: 0.8 + Math.random() * 1.5,
+    ruido: 38 + Math.random() * 12
+  };
+});
+
+let firebaseData = {temperatura:null,vibracao:null,ruido:null};
+let lastFirebaseUpdate = null;
+
+function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+function tickSimulation(){
+  machines.filter(m=>!m.real).forEach(m=>{
+    const s=simulated[m.id];
+    s.temperatura=clamp(s.temperatura+(Math.random()-.5)*.35,20,32);
+    s.vibracao=clamp(s.vibracao+(Math.random()-.5)*.12,.4,3.8);
+    s.ruido=clamp(s.ruido+(Math.random()-.5)*1.5,32,58);
+  });
+  render();
+}
+setInterval(tickSimulation,2500);
+
+function format(v, decimals=1){return v===null || v===undefined || Number.isNaN(Number(v)) ? "--" : Number(v).toFixed(decimals)}
+// Limites de referência para o protótipo. A classificação final deve ser ajustada
+// conforme manual do fabricante, rotação, carga e ponto de medição.
+function classifyMetric(value, type){
+  if(value===null || value===undefined || Number.isNaN(Number(value))) return {level:0,cls:'status-alerta',label:'Alerta — aguardando leitura'};
+  const v=Number(value);
+  if(type==='temperatura') return v<=35?{level:0,cls:'status-normal',label:'Normal'}:v<=45?{level:1,cls:'status-alerta',label:'Alerta'}:{level:2,cls:'status-perigo',label:'Perigo'};
+  if(type==='vibracao') return v<=2.8?{level:0,cls:'status-normal',label:'Normal'}:v<=4.5?{level:1,cls:'status-alerta',label:'Alerta'}:{level:2,cls:'status-perigo',label:'Perigo'};
+  return v<=75?{level:0,cls:'status-normal',label:'Normal'}:v<=85?{level:1,cls:'status-alerta',label:'Alerta'}:{level:2,cls:'status-perigo',label:'Perigo'};
+}
+function machineStatus(d){
+  const states=[classifyMetric(d.temperatura,'temperatura'),classifyMetric(d.vibracao,'vibracao'),classifyMetric(d.ruido,'ruido')];
+  return states.reduce((worst,current)=>current.level>worst.level?current:worst,states[0]);
+}
+function machineCard(m){
+  const d=m.real ? firebaseData : simulated[m.id];
+  const online=m.real && lastFirebaseUpdate ? true : !m.real;
+  const status=machineStatus(d);
+  return `<article class="machine ${m.real?'real':''}" data-machine-id="${m.id}" tabindex="0" role="button" aria-label="Abrir ${m.name} em destaque">
+    <div class="machine-head">
+      <div><div class="machine-name">${m.name}</div><div class="machine-code">ID: ${m.id.toUpperCase()}</div></div>
+      <span class="badge ${online?'online':'simulated'}">${m.real?(online?'● Online':'○ Aguardando'):'Simulação'}</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Temperatura</div><div class="metric-value">${format(d.temperatura)}<span class="metric-unit">°C</span></div><div class="metric-status"><span class="status-dot ${classifyMetric(d.temperatura,'temperatura').cls}"></span>${classifyMetric(d.temperatura,'temperatura').label}</div></div>
+      <div class="metric"><div class="metric-label">Vibração</div><div class="metric-value">${format(d.vibracao)}<span class="metric-unit">mm/s</span></div><div class="metric-status"><span class="status-dot ${classifyMetric(d.vibracao,'vibracao').cls}"></span>${classifyMetric(d.vibracao,'vibracao').label}</div></div>
+      <div class="metric"><div class="metric-label">Ruído</div><div class="metric-value">${format(d.ruido,0)}<span class="metric-unit">dB*</span></div><div class="metric-status"><span class="status-dot ${classifyMetric(d.ruido,'ruido').cls}"></span>${classifyMetric(d.ruido,'ruido').label}</div></div>
+    </div><div class="machine-footer"><span>${m.real?'<span class="real-tag">● Dados reais do Sistema</span>':'Valores operacionais simulados'}</span><span>${m.real&&lastFirebaseUpdate?new Date(lastFirebaseUpdate).toLocaleTimeString('pt-BR'):'Atualização contínua'}</span></div>
+  </article>`;
+}
+let selectedMachineId = null;
+
+function updateMachineFocus(){
+  const grid=document.getElementById("machineGrid");
+  grid.classList.toggle("has-focus",!!selectedMachineId);
+  grid.querySelectorAll(".machine").forEach(card=>card.classList.toggle("selected",card.dataset.machineId===selectedMachineId));
+}
+
+function bindMachineCards(){
+  document.querySelectorAll("#machineGrid .machine").forEach(card=>{
+    const select=()=>{const id=card.dataset.machineId;selectedMachineId=selectedMachineId===id?null:id;updateMachineFocus();};
+    card.addEventListener("click",select);
+    card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}});
+  });
+}
+
+function render(){
+  document.getElementById("machineGrid").innerHTML=machines.map(machineCard).join("");
+  bindMachineCards();
+  updateMachineFocus();
+  document.getElementById("connectedMachines").textContent=lastFirebaseUpdate?"1":"0";
+  const temps=machines.filter(m=>!m.real).map(m=>simulated[m.id].temperatura);
+  document.getElementById("avgTemp").textContent=(temps.reduce((a,b)=>a+b,0)/temps.length).toFixed(1)+"°";
+  document.getElementById("lastUpdate").textContent=new Date().toLocaleTimeString("pt-BR");
+}
+render();
+
+const sensoresRef = ref(database, "sensores/fresadora02");
+
+onValue(sensoresRef, snapshot => {
+  const d = snapshot.val() || {};
+
+  firebaseData = {
+    temperatura: d.temperatura ?? null,
+    vibracao: d.vibracao ?? null,
+    ruido: d.ruido ?? null
+  };
+
+  lastFirebaseUpdate = Date.now();
+  render();
+
+}, error => {
+  console.error("Erro ao ler Firebase:", error);
+  render();
+});
+
+
+let charts={};
+function historicalSeries(metric){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const labels=[]; for(let i=7;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);labels.push(d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}));}
+  return {labels,datasets:machines.map((m,mi)=>({label:m.name,data:labels.map((_,di)=>{
+    const seed=(mi+2)*17+(di+3)*13;
+    if(metric==='temperatura') return +(23+mi*.9+Math.sin(seed)*3+((seed*7)%10)/5).toFixed(1);
+    if(metric==='vibracao') return +(0.7+mi*.18+Math.abs(Math.sin(seed))*1.8+((seed*5)%7)/10).toFixed(2);
+    return +(39+mi*2+Math.abs(Math.sin(seed))*15+((seed*3)%8)).toFixed(0);
+  }),tension:.3,fill:false,borderWidth:2}) )};
+}
+function peakText(data,unit){let best={v:-Infinity,l:''};data.datasets.forEach(ds=>ds.data.forEach((v,i)=>{if(v>best.v)best={v,l:`${ds.label} — ${data.labels[i]}`} }));return `Maior registro: ${best.l} (${best.v} ${unit})`;}
+function makeChart(id,data,unit){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),{type:'line',data,options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#edf4ff'}}},scales:{x:{ticks:{color:'#8fa3bf'},grid:{color:'#263752'}},y:{title:{display:true,text:unit,color:'#8fa3bf'},ticks:{color:'#8fa3bf'},grid:{color:'#263752'}}}}});}
+function setActiveNav(activeId){document.querySelectorAll('.nav-item').forEach(btn=>btn.classList.remove('active')); const btn=document.getElementById(activeId); if(btn) btn.classList.add('active');}
+function showMachines(){setActiveNav('machinesNav');document.querySelector('.heading-row').style.display='none';document.querySelector('.overview').style.display='none';document.querySelector('.section-title').style.display='none';document.getElementById('machineGrid').style.display='none';document.getElementById('historyPanel').classList.remove('active');document.getElementById('machinesPanel').classList.add('active');}
+function showHistory(){setActiveNav('historyNav');document.getElementById('machinesPanel').classList.remove('active');document.querySelector('.heading-row').style.display='none';document.querySelector('.overview').style.display='none';document.querySelector('.section-title').style.display='none';document.getElementById('machineGrid').style.display='none';document.getElementById('historyPanel').classList.add('active');const t=historicalSeries('temperatura'),v=historicalSeries('vibracao'),n=historicalSeries('ruido');document.getElementById('historyRange').textContent=`Período: ${t.labels[0]} até ${t.labels[7]} — dados históricos demonstrativos por máquina`;makeChart('tempChart',t,'°C');makeChart('vibChart',v,'mm/s');makeChart('noiseChart',n,'dB');document.getElementById('tempPeak').textContent=peakText(t,'°C');document.getElementById('vibPeak').textContent=peakText(v,'mm/s');document.getElementById('noisePeak').textContent=peakText(n,'dB');}
+function showOverview(){setActiveNav('overviewNav');document.getElementById('machinesPanel').classList.remove('active');document.getElementById('historyPanel').classList.remove('active');document.querySelector('.heading-row').style.display='flex';document.querySelector('.overview').style.display='grid';document.querySelector('.section-title').style.display='block';document.getElementById('machineGrid').style.display='grid';}
+function hideHistory(){showOverview();}
+document.getElementById('historyNav').addEventListener('click',showHistory);document.getElementById('machinesNav').addEventListener('click',showMachines);document.getElementById('backOverview').addEventListener('click',showOverview);document.querySelectorAll('.nav-item')[0].addEventListener('click',showOverview);
+document.getElementById("loginForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const error=document.getElementById("loginError");
+  error.textContent="";
+  try{
+    await signInWithEmailAndPassword(auth,document.getElementById("email").value,document.getElementById("password").value);
+  }catch(err){
+    error.textContent="E-mail ou senha inválidos. Verifique as credenciais.";
+  }
+});
+document.getElementById("logoutBtn").addEventListener("click",()=>signOut(auth));
+onAuthStateChanged(auth,user=>{
+  document.getElementById("loginScreen").classList.toggle("hidden",!!user);
+  document.getElementById("app").classList.toggle("hidden",!user);
+  if(user) document.getElementById("userEmail").textContent=user.email;
+});
+</script>
+</body>
+</html>
