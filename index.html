@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InduSense | Monitoramento Industrial</title>
+<style>
+:root{
+  --bg:#0b1220;--panel:#111b2e;--panel2:#17243a;--line:#263752;
+  --text:#edf4ff;--muted:#8fa3bf;--accent:#42d3a5;--blue:#5b8cff;
+  --warning:#f6c85f;--danger:#ff6b7a;--shadow:0 20px 60px rgba(0,0,0,.28)
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;min-width:0}
+button,input{font:inherit}
+button{cursor:pointer;border:0}
+.hidden{display:none!important}
+.status-dot{width:13px;height:13px;border-radius:50%;display:inline-block;margin-right:8px;box-shadow:0 0 12px currentColor}.status-normal{color:#42d3a5;background:#42d3a5}.status-alerta{color:#f6c85f;background:#f6c85f}.status-perigo{color:#ff6b7a;background:#ff6b7a}.status-line{display:flex;align-items:center;margin-top:18px;font-size:12px;font-weight:700}.metric-status{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;font-weight:700}.metric-status .status-dot{width:9px;height:9px;margin-right:0;box-shadow:0 0 8px currentColor}.history-panel{display:none}.history-panel.active{display:block}.chart-grid{display:grid;grid-template-columns:1fr;gap:18px}.chart-card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:20px}.chart-wrap{height:300px;position:relative}.history-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.peak{color:var(--muted);font-size:12px;margin-top:10px}
+.login-screen{min-height:100vh;display:grid;grid-template-columns:1.1fr .9fr}
+.login-visual{padding:70px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(circle at 15% 15%,#203a65 0,transparent 38%),linear-gradient(145deg,#0d1729,#0a101c)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.08em}
+.brand-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--blue));display:grid;place-items:center;color:#07111e;font-weight:900}
+.login-visual h1{font-size:58px;line-height:1.03;max-width:650px;margin:0 0 24px}
+.login-visual p{max-width:570px;color:var(--muted);font-size:18px;line-height:1.7}
+.visual-footer{color:#637895;font-size:13px}
+.login-panel{display:flex;align-items:center;justify-content:center;padding:50px;background:#0f1929}
+.login-box{width:390px}
+.login-box h2{font-size:32px;margin:0 0 10px}
+.login-box .subtitle{color:var(--muted);margin:0 0 34px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:13px;color:#a9bad1;margin-bottom:8px}
+.field input{width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:10px;background:#0b1423;color:var(--text);outline:none}
+.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #5b8cff22}
+.primary{width:100%;padding:14px;border-radius:10px;background:linear-gradient(90deg,var(--blue),#769cff);color:white;font-weight:700}
+.error{color:var(--danger);font-size:13px;margin-top:14px;min-height:18px}
+.demo-note{margin-top:28px;padding:14px;border:1px solid #30425e;border-radius:10px;color:var(--muted);font-size:12px;line-height:1.6}
+.app{min-height:100vh}
+.topbar{height:76px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 34px;background:#0e1828}
+.topbar-left{display:flex;align-items:center;gap:28px}
+.page-title{font-size:18px;font-weight:700}
+.live-pill{display:flex;align-items:center;gap:8px;color:#a8b9ce;font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px #42d3a522}
+.topbar-right{display:flex;align-items:center;gap:20px;color:var(--muted);font-size:13px}
+.logout{padding:9px 14px;border-radius:8px;background:#1b2940;color:#c9d7ea}
+.layout{display:grid;grid-template-columns:245px 1fr}
+.sidebar{border-right:1px solid var(--line);min-height:calc(100vh - 76px);padding:28px 18px;background:#0d1727}
+.side-label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#637895;margin:0 12px 14px}
+.nav-item{width:100%;padding:13px 14px;border-radius:9px;color:#9db0c9;background:transparent;text-align:left;margin-bottom:6px}
+.nav-item.active,.nav-item:hover{background:#1b2a43;color:#fff}
+.main{padding:32px 38px 50px;max-width:1500px}
+.heading-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);font-weight:700}
+h1{font-size:32px;margin:8px 0 0}
+.subheading{color:var(--muted);margin-top:8px}
+.overview{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.stat-top{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+.stat-value{font-size:30px;font-weight:750;margin-top:13px}
+.stat-foot{font-size:12px;color:#6f86a5;margin-top:8px}
+.section-title{font-size:16px;margin:0 0 15px}
+.machine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+.machine{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:20px;transition:.25s ease;cursor:pointer}
+.machine:hover{transform:translateY(-2px);border-color:#3b5274}
+.machine-grid.has-focus{grid-template-columns:repeat(3,1fr);grid-auto-rows:auto;align-items:stretch}
+.machine-grid.has-focus .machine.selected{grid-column:1 / -1;grid-row:auto;order:-1}
+.machine-grid.has-focus .machine.selected .machine-name{font-size:24px}
+.machine-grid.has-focus .machine.selected .metric-value{font-size:32px}
+.machine-grid.has-focus .machine.selected .metric{padding:18px 14px}
+.machine-grid.has-focus .machine.selected .metrics{gap:14px;margin-top:30px}
+.machine.real{border-color:#3b6c68;box-shadow:0 0 0 1px #42d3a51a inset}
+.machine-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.machine-name{font-size:17px;font-weight:750}
+.machine-code{font-size:11px;color:#6f86a5;margin-top:5px}
+.badge{font-size:11px;padding:6px 9px;border-radius:999px;white-space:nowrap}
+.badge.online{background:#143d38;color:#67e0bd}
+.badge.simulated{background:#26334a;color:#a9bce0}
+.badge.offline{background:#40242c;color:#ff9ba7}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px}
+.metric{background:var(--panel2);border-radius:10px;padding:13px 10px}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:8px}
+.metric-value{font-size:21px;font-weight:750}
+.metric-unit{font-size:11px;color:#7890ad;margin-left:3px}
+.machine-footer{border-top:1px solid var(--line);margin-top:20px;padding-top:15px;display:flex;justify-content:space-between;color:#7086a3;font-size:11px}
+.real-tag{color:var(--accent)}
+
+.alert-banner{margin:-8px 0 22px;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(90deg,#121e31,#101a2b);display:flex;align-items:center;justify-content:space-between;gap:18px}
+.alert-banner .alert-count{font-size:24px;font-weight:800}.alert-banner .alert-text{color:var(--muted);font-size:12px;margin-top:3px}.alert-pill{padding:8px 12px;border-radius:999px;font-size:11px;font-weight:800}.alert-pill.normal{background:#143d38;color:#67e0bd}.alert-pill.alerta{background:#4a3d1d;color:#f6c85f}.alert-pill.perigo{background:#4a222b;color:#ff9ba7}
+.machine.selected{border-color:#5b8cff;box-shadow:0 0 0 2px #5b8cff33,0 18px 50px rgba(0,0,0,.25)}
+.machine.selected .machine-head{align-items:center}.machine-selected-details{display:none;margin-top:20px;border-top:1px solid var(--line);padding-top:20px}.machine.selected .machine-selected-details{display:block}.detail-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:12px}.detail-box{background:#0e192a;border:1px solid #263752;border-radius:11px;padding:14px}.detail-box h4{margin:0 0 9px;font-size:11px;color:#8fa3bf;text-transform:uppercase;letter-spacing:.08em}.detail-box p{margin:4px 0;color:#dce7f7;font-size:13px}.limit-line{display:flex;justify-content:space-between;gap:12px;color:#a9bad1;font-size:12px;padding:4px 0}.limit-line strong{color:#edf4ff}.machine-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:15px}.small-btn{padding:9px 12px;border-radius:8px;background:#1b2940;color:#d8e5f7;border:1px solid #2a3d5b}.small-btn:hover{border-color:#5b8cff}.focus-hint{font-size:11px;color:#7086a3;margin-top:8px}.modal-backdrop{position:fixed;inset:0;background:rgba(3,8,16,.78);display:none;align-items:center;justify-content:center;z-index:100}.modal-backdrop.open{display:flex}.limits-modal{width:min(620px,calc(100vw - 40px));background:#111b2e;border:1px solid #30435f;border-radius:16px;box-shadow:0 25px 90px rgba(0,0,0,.5);padding:24px}.limits-modal h2{margin:0 0 5px}.limits-modal .modal-sub{color:var(--muted);font-size:12px;margin-bottom:20px}.limit-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.limit-form label{font-size:11px;color:#9fb1c9}.limit-form input{width:100%;margin-top:6px;padding:11px;border-radius:9px;border:1px solid #2a3d5b;background:#0b1423;color:#edf4ff}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.save-btn{padding:10px 16px;border-radius:9px;background:linear-gradient(90deg,var(--blue),#769cff);color:white;font-weight:700}.tech-note{margin-top:16px;padding:12px;border-radius:10px;background:#0d1727;border:1px solid #263752;color:#7f94b1;font-size:11px;line-height:1.55}
+
+/* Painel visual de destaque da máquina selecionada */
+.machine.selected{grid-column:1/-1;position:relative;overflow:hidden;background:radial-gradient(ellipse at 8% 0%,#1b3550 0,transparent 45%),var(--panel)}
+.machine.selected:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--accent),var(--blue))}
+.machine-visuals{display:grid;grid-template-columns:1.05fr repeat(3,1fr);gap:14px;margin-top:18px}
+.machine-visual-card{min-width:0;background:linear-gradient(145deg,#101d30,#0c1626);border:1px solid #263752;border-radius:13px;padding:15px;overflow:hidden}
+.machine-visual-card h4{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9eb2cc;margin:0 0 12px}
+.machine-illustration{height:104px;display:flex;align-items:center;justify-content:center;position:relative}
+.machine-illustration svg{width:100%;height:100%;max-width:190px}
+.machine-visual-caption{font-size:11px;color:#8097b4;text-align:center;margin-top:3px}
+.visual-reading{font-size:24px;font-weight:800;letter-spacing:-.03em}
+.visual-reading small{font-size:11px;font-weight:600;color:#8fa3bf;letter-spacing:0}
+.visual-status{font-size:11px;color:#a9bad1;margin-top:5px}
+.sparkline{width:100%;height:68px;display:block;margin-top:5px;overflow:visible}
+.sparkline .spark-grid{stroke:#263752;stroke-width:1;stroke-dasharray:3 4}
+.sparkline .spark-area{opacity:.15}
+.sparkline .spark-line{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.visual-foot{display:flex;justify-content:space-between;gap:8px;color:#7186a2;font-size:10px;margin-top:6px}
+.gauge-row{display:flex;align-items:center;gap:12px}
+.gauge{width:64px;height:64px;flex:0 0 64px;border-radius:50%;display:grid;place-items:center;position:relative;background:conic-gradient(var(--gauge-color) var(--gauge-value),#263752 0)}
+.gauge:before{content:"";position:absolute;inset:6px;background:#101b2c;border-radius:50%}
+.gauge span{position:relative;font-size:12px;font-weight:800}
+.visual-legend{display:flex;gap:10px;flex-wrap:wrap;color:#8fa3bf;font-size:10px;margin-top:10px}
+.visual-legend span{display:flex;align-items:center;gap:5px}
+.legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.presentation-note{margin-top:14px;padding:11px 13px;border:1px solid #2b4563;border-radius:10px;background:#101d30;color:#91a7c3;font-size:11px;line-height:1.5}
+@media(max-width:1250px){.machine-visuals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){body{min-width:0}.machine-visuals{grid-template-columns:1fr}.machine-grid,.machine-grid.has-focus{grid-template-columns:1fr}.machine.selected{grid-column:1}.main{padding:20px 14px}.topbar{padding:0 14px}.sidebar{padding:18px 10px}.layout{grid-template-columns:150px minmax(0,1fr)}.overview{grid-template-columns:1fr}.metrics{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
+
+.machine-tech-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.tech-card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:20px}.tech-card h2{margin:0 0 14px;font-size:18px}.tech-card h3{font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin:18px 0 7px}.specs{display:grid;grid-template-columns:1fr 1fr;gap:7px 18px;color:#a9bad1;font-size:12px;line-height:1.5}.specs b{color:#edf4ff}.source-note{margin-top:16px;color:#7186a2;font-size:11px;line-height:1.5}
+@media(max-width:900px){.machine-tech-grid,.detail-grid,.limit-form{grid-template-columns:1fr}.overview{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1250px){.machine-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* Gráficos de barras: leitura simples, cores por máquina e explicações visíveis */
+.bar-visual-card{background:linear-gradient(145deg,#fff,#f3f7ff)!important;color:#172033!important;border:1px solid #dbe6f5!important;box-shadow:0 8px 22px rgba(30,64,175,.07)}
+.bar-visual-card h4{color:#334155!important;display:flex;justify-content:space-between;align-items:center}
+.bar-unit{font-size:11px;background:#e8eefc;color:#3855a5;padding:4px 7px;border-radius:6px;letter-spacing:0}
+.bar-reading-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:5px 0 16px}
+.bar-reading-row .visual-reading{color:#172033;font-size:27px}
+.bar-reading-row .visual-reading small{color:#64748b}
+.bar-status{font-size:11px;font-weight:800;border-radius:20px;padding:6px 9px;white-space:nowrap}
+.simple-bar{height:20px;border-radius:7px;background:linear-gradient(90deg,#d1fae5 0%,#fef3c7 65%,#fee2e2 100%);position:relative;overflow:visible;margin:8px 0 4px;box-shadow:inset 0 1px 3px #00000012}
+.simple-bar-fill{height:100%;border-radius:7px;min-width:2px;transition:width .35s ease;box-shadow:0 2px 7px #0002}
+.bar-marker{position:absolute;top:-4px;height:28px;width:3px;border-radius:2px;z-index:2}
+.alert-marker{background:#d97706}.danger-marker{background:#dc2626}
+.bar-scale{display:flex;justify-content:space-between;font-size:10px;color:#64748b}
+.bar-explain{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:13px;font-size:10px;color:#475569}
+.bar-explain span{display:flex;align-items:center;gap:5px}
+.bar-explain .legend-dot{width:8px;height:8px}
+#historyPanel .chart-card{background:linear-gradient(145deg,var(--panel),var(--panel2));box-shadow:0 12px 30px rgba(0,0,0,.08)}
+#historyPanel .chart-card:nth-child(1){border-top:4px solid #10b981}
+#historyPanel .chart-card:nth-child(2){border-top:4px solid #3b82f6}
+#historyPanel .chart-card:nth-child(3){border-top:4px solid #a855f7}
+#historyPanel .section-title{font-size:19px}
+#historyPanel .peak{padding:11px 13px;border-radius:9px;background:#eaf2ff;color:#294778;line-height:1.5}
+body.access-dark .bar-visual-card{background:linear-gradient(145deg,#17243a,#111b2e)!important;color:#edf4ff!important;border-color:#334766!important}
+body.access-dark .bar-visual-card h4,body.access-dark .bar-reading-row .visual-reading{color:#edf4ff!important}
+body.access-dark .bar-reading-row .visual-reading small,body.access-dark .bar-scale,body.access-dark .bar-explain{color:#a9bad1!important}
+body.access-dark .bar-unit{background:#263752;color:#c7d8ff}
+body.access-dark #historyPanel .peak{background:#172b49;color:#cfe0ff}
+@media(max-width:700px){.bar-explain{gap:7px}.bar-reading-row .visual-reading{font-size:24px}}
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+
+<style id="accessibilityStyles">
+#accessibilityToggle{position:fixed;right:16px;bottom:18px;z-index:9998;border:0;border-radius:999px;background:#173b66;color:#fff;padding:13px 16px;font:600 14px system-ui;box-shadow:0 8px 28px #0003;cursor:pointer}
+#accessibilityPanel{position:fixed;right:16px;bottom:76px;z-index:9999;box-sizing:border-box;width:min(370px,calc(100vw - 24px));max-height:80vh;overflow:auto;background:#fff!important;color:#172033!important;border:1px solid #d5dde7;border-radius:16px;padding:18px;box-shadow:0 16px 45px #0004;display:none;font-family:Arial,sans-serif!important;font-size:14px!important;line-height:1.45}
+#accessibilityPanel *{box-sizing:border-box;color:inherit}
+#accessibilityPanel.open{display:block}
+#accessibilityPanel h2{font-size:19px!important;margin:0 0 14px;color:#172033!important}
+#accessibilityPanel .access-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(145px,1.2fr);align-items:center;gap:10px;margin:13px 0}
+#accessibilityPanel label{font-size:13px!important;font-weight:700;color:#263449!important}
+#accessibilityPanel select{width:100%;min-width:0;border:1px solid #cbd5e1;border-radius:9px;padding:9px 10px;background:#f8fafc!important;color:#172033!important;font:14px Arial,sans-serif!important}
+#accessibilityPanel .access-buttons{display:flex;gap:8px;margin-top:15px}
+#accessibilityPanel .access-buttons button{flex:1;border:1px solid #cbd5e1;border-radius:9px;padding:9px;background:#f1f5f9!important;color:#172033!important;font:600 13px Arial,sans-serif!important;cursor:pointer}
+#accessibilityPanel .access-help{font-size:12px!important;color:#526174!important;margin:10px 0 0}
+body.access-light{--bg:#f3f6fa;--panel:#ffffff;--panel2:#f8fafc;--line:#dbe3ed;--text:#172033;--muted:#526174;--accent:#087f68;--blue:#315fc4;color-scheme:light!important;background:#f3f6fa!important;color:#172033!important}
+body.access-light #loginScreen,body.access-light .login-screen,body.access-light .login-panel,body.access-light .login-box,body.access-light .layout,body.access-light .main,body.access-light .overview,body.access-light .app,body.access-light .topbar,body.access-light .sidebar,body.access-light .main-content{background:#f3f6fa!important;color:#172033!important}
+body.access-light .sidebar{background:#fff!important;border-color:#dbe3ed!important}
+body.access-light .topbar,body.access-light .login-box,body.access-light .login-panel,body.access-light .stat,body.access-light .alert-banner,body.access-light .machine,body.access-light .metric,body.access-light .detail-box,body.access-light .machine-visual-card,body.access-light .history-panel,body.access-light .chart-card,body.access-light .tech-card,body.access-light .limits-modal,body.access-light .tech-note,body.access-light .presentation-note,body.access-light .machine-selected-details,body.access-light .chart-wrap,body.access-light .chart-grid,body.access-light .detail-grid,body.access-light .machine-grid,body.access-light .metric-card,body.access-light .card,body.access-light .panel,body.access-light .table-wrap{background:#fff!important;background-image:none!important;color:#172033!important;border-color:#dbe3ed!important;box-shadow:0 5px 18px rgba(18,38,63,.06)}
+body.access-light .machine.selected{background:#fff!important;border-color:#6d8fe8!important}
+body.access-light .machine:before{opacity:.45}
+body.access-light .badge.online,body.access-light .alert-pill.normal{background:#dcfce7!important;color:#166534!important}
+body.access-light .badge.simulated{background:#e8eef8!important;color:#34445e!important}
+body.access-light .badge.offline,body.access-light .alert-pill.perigo{background:#fee2e2!important;color:#991b1b!important}
+body.access-light .alert-pill.alerta{background:#fef3c7!important;color:#92400e!important}
+body.access-light .detail-box h4,body.access-light .detail-box p,body.access-light .limit-line,body.access-light .limit-line strong,body.access-light .machine-code,body.access-light .machine-footer,body.access-light .metric-label,body.access-light .metric-unit,body.access-light .focus-hint,body.access-light .visual-reading small,body.access-light .visual-status,body.access-light .machine-visual-caption,body.access-light .visual-foot,body.access-light .visual-legend,body.access-light .presentation-note,body.access-light .tech-note,body.access-light .subheading,body.access-light .subtitle,body.access-light .source-note,body.access-light .stat-foot,body.access-light .alert-text,body.access-light .eyebrow{color:#526174!important}
+body.access-light .detail-box,body.access-light .machine-visual-card,body.access-light .tech-note,body.access-light .presentation-note{background:#f8fafc!important}
+body.access-light .gauge:before{background:#fff!important}
+body.access-light .gauge{background:conic-gradient(var(--gauge-color) var(--gauge-value),#dce4ef 0)}
+body.access-light .spark-grid{stroke:#d5deea!important}
+body.access-light .limit-form input,body.access-light input,body.access-light select,body.access-light textarea{background:#fff!important;color:#172033!important;border-color:#cbd5e1!important}
+body.access-light .small-btn{background:#edf2f8!important;color:#172033!important;border-color:#cbd5e1!important}
+body.access-light .save-btn,body.access-light .primary{color:#fff!important}
+body.access-dark{--bg:#0b1220;--panel:#111b2e;--panel2:#17243a;--line:#263752;--text:#edf4ff;--muted:#8fa3bf;--accent:#42d3a5;--blue:#5b8cff;color-scheme:dark!important;background:#0b1220!important;color:#edf4ff!important}
+body.access-dark #loginScreen,body.access-dark .login-screen,body.access-dark .login-panel,body.access-dark .login-box,body.access-dark .layout,body.access-dark .main,body.access-dark .overview,body.access-dark .app,body.access-dark .topbar,body.access-dark .sidebar,body.access-dark .main-content{background:#0b1220!important;color:#edf4ff!important}
+body.access-dark .sidebar,body.access-dark .topbar,body.access-dark .stat,body.access-dark .alert-banner,body.access-dark .machine,body.access-dark .metric,body.access-dark .detail-box,body.access-dark .machine-visual-card,body.access-dark .history-panel,body.access-dark .chart-card,body.access-dark .tech-card,body.access-dark .limits-modal,body.access-dark .tech-note,body.access-dark .presentation-note,body.access-dark .chart-wrap,body.access-dark .table-wrap{background:#111b2e!important;background-image:none!important;color:#edf4ff!important;border-color:#263752!important}
+body.access-dark .detail-box p,body.access-dark .limit-line strong,body.access-dark .machine-name,body.access-dark .visual-reading,body.access-dark h1,body.access-dark h2,body.access-dark h3,body.access-dark h4{color:#edf4ff!important}
+body.access-dark .detail-box h4,body.access-dark .limit-line,body.access-dark .machine-code,body.access-dark .machine-footer,body.access-dark .metric-label,body.access-dark .metric-unit,body.access-dark .focus-hint,body.access-dark .visual-status,body.access-dark .machine-visual-caption,body.access-dark .visual-foot,body.access-dark .visual-legend,body.access-dark .subheading,body.access-dark .subtitle,body.access-dark .source-note,body.access-dark .stat-foot,body.access-dark .alert-text{color:#9fb1c9!important}
+body.access-dark .badge.online,body.access-dark .alert-pill.normal{background:#143d38!important;color:#67e0bd!important}
+body.access-dark .badge.simulated{background:#26334a!important;color:#a9bce0!important}
+body.access-dark .badge.offline,body.access-dark .alert-pill.perigo{background:#40242c!important;color:#ff9ba7!important}
+body.access-dark .alert-pill.alerta{background:#4a3d1d!important;color:#f6c85f!important}
+body.access-dark .gauge:before{background:#101b2c!important}
+body.access-dark .limit-form input,body.access-dark input,body.access-dark select,body.access-dark textarea{background:#0b1423!important;color:#edf4ff!important;border-color:#2a3d5b!important}
+body.access-dark .small-btn{background:#1b2940!important;color:#d8e5f7!important;border-color:#2a3d5b!important}
+body.access-dark #accessibilityPanel{background:#182331!important;color:#f1f5f9!important;border-color:#344456!important}
+body.access-dark #accessibilityPanel h2,body.access-dark #accessibilityPanel label{color:#f1f5f9!important}
+body.access-dark #accessibilityPanel select,body.access-dark #accessibilityPanel .access-buttons button{background:#202e3e!important;color:#f1f5f9!important;border-color:#4b5d72!important}
+body.access-dark #accessibilityPanel .access-help{color:#c1ccda!important}
+body.access-large{font-size:1.12em!important}
+body.access-xlarge{font-size:1.25em!important}
+body.access-large :is(p,span,a,li,label,button,input,select,textarea,td,th,small,strong,em,h1,h2,h3,h4,h5,h6,.metric-value,.metric-label,.status,.subheading,.source-note){font-size:1.1em}
+body.access-xlarge :is(p,span,a,li,label,button,input,select,textarea,td,th,small,strong,em,h1,h2,h3,h4,h5,h6,.metric-value,.metric-label,.status,.subheading,.source-note){font-size:1.2em}
+body.access-font-serif{font-family:Georgia,"Times New Roman",serif!important}
+body.access-font-dyslexic{font-family:Verdana,Arial,sans-serif!important;letter-spacing:.025em;line-height:1.65}
+body.access-high-contrast{filter:contrast(1.2)}
+body.access-high-contrast a,body.access-high-contrast button{outline:2px solid currentColor;outline-offset:2px}
+@media(max-width:480px){#accessibilityToggle{right:12px;bottom:12px;padding:12px 14px}#accessibilityPanel{right:12px;bottom:68px;width:calc(100vw - 24px);padding:15px}#accessibilityPanel .access-row{grid-template-columns:1fr;gap:5px}}
+</style>
+
+
+
+
+</head>
+<body>
+
+<section id="loginScreen" class="login-screen">
+  <div class="login-visual">
+    <div class="brand"><div class="brand-mark">IS</div> INDUSENSE</div>
+    <div>
+      <div class="eyebrow">Monitoramento industrial</div>
+      <h1>EXPOTEC SENAI 2026, TURMA DE OPERAÇÃO DE MÁQUINAS.</h1>
+      <p>Acompanhe temperatura, vibração e ruído das máquinas em tempo real, com uma interface centralizada para sua operação. Integrantes: Danilo Rocha, Diego, Rafael e Samuel</p>
+    </div>
+    <div class="visual-footer">Sistema de supervisão • Ambiente protegido</div>
+  </div>
+  <div class="login-panel">
+    <div class="login-box">
+      <h2>Fazer Login</h2>
+      <p class="subtitle">Use suas credenciais para acessar o monitoramento.</p>
+      <form id="loginForm">
+        <div class="field"><label for="email">E-mail</label><input id="email" type="email" placeholder="Email" required></div>
+        <div class="field"><label for="password">Senha</label><input id="password" type="password" placeholder="Senha" required></div>
+        <button class="primary" type="submit">Entrar</button>
+        <div id="loginError" class="error"></div>
+      </form>
+      <div class="demo-note">Sistema de Monitoramento Industrial desenvolvido pela turma de Operação de Máquinas e Ferramentas convencinais da unidade Senai CFP Alvimar Carneiro de Rezende com o objetivo de apresentar nossa ideia de inovação para a indústria.</div>
+    </div>
+  </div>
+</section>
+
+<section id="app" class="app hidden">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand"><div class="brand-mark">IS</div> INDUSENSE</div>
+      <div class="page-title">Central de monitoramento</div>
+      <div class="live-pill"><span class="dot"></span> Sistema operacional</div>
+    </div>
+    <div class="topbar-right"><span id="userEmail">usuário</span><button id="accessibilityToggle" type="button" aria-expanded="false" aria-controls="accessibilityPanel" hidden>♿ Acessibilidade</button><button id="logoutBtn" class="logout">Sair</button></div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-label">Navegação</div>
+      <button class="nav-item active" id="overviewNav">Visão geral</button>
+      <button class="nav-item" id="machinesNav">Máquinas</button>
+      <button class="nav-item" id="historyNav">Histórico</button>
+      <div class="side-label" style="margin-top:35px">Conexão</div>
+      <div style="padding:12px;color:#7086a3;font-size:12px;line-height:1.7">Sistema de Monitoramento<br><span style="color:#67e0bd">● Conectado</span></div>
+    </aside>
+    <main class="main">
+      <div class="heading-row">
+        <div><div class="eyebrow">Visão geral</div><h1>Parque de máquinas</h1><div class="subheading">Acompanhamento operacional das máquinas cadastradas.</div></div>
+        <div style="color:#7890ad;font-size:12px">Atualização automática</div>
+      </div>
+      <div class="overview">
+        <div class="stat"><div class="stat-top"><span>Máquinas cadastradas</span><span>▦</span></div><div id="totalMachines" class="stat-value">6</div><div class="stat-foot">Ativas no painel</div></div>
+        <div class="stat"><div class="stat-top"><span>Conectadas ao Sistema</span><span>↗</span></div><div id="connectedMachines" class="stat-value">1</div><div class="stat-foot">Leitura em tempo real</div></div>
+        <div class="stat"><div class="stat-top"><span>Temperatura média</span><span>°C</span></div><div id="avgTemp" class="stat-value">--</div><div class="stat-foot">Entre as máquinas simuladas</div></div>
+        <div class="stat"><div class="stat-top"><span>Última atualização</span><span>◷</span></div><div id="lastUpdate" class="stat-value" style="font-size:22px">--:--:--</div><div class="stat-foot">Dados do painel</div></div>
+      </div>
+      <div id="alertBanner" class="alert-banner"><div><div class="alert-count" id="alertCount">0</div><div class="alert-text">máquinas necessitam de atenção neste momento</div></div><div id="alertPill" class="alert-pill normal">● Operação normal</div></div>
+      <div id="firebaseDiagnostics" style="margin:-10px 0 14px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:12px;line-height:1.5">Painel de monitoramento industrial — indicadores e tendências visuais das máquinas.</div><div class="machine-details-guide overview-guide"><div><strong>🟢 Normal</strong>Leitura dentro da faixa esperada.</div><div><strong>🟡 Atenção</strong>Confira a leitura e acompanhe a evolução.</div><div><strong>🔴 Perigo</strong>Verifique a condição do equipamento com a equipe responsável.</div></div>
+      <h2 class="section-title">Máquinas cadastradas</h2><div class="focus-hint" style="margin:-7px 0 14px">Clique em uma máquina para abrir o painel visual completo com indicadores, gráficos e estado operacional.</div>
+      <div id="machineGrid" class="machine-grid"></div>
+        <section id="machinesPanel" class="history-panel">
+        <div class="history-toolbar"><div><div class="eyebrow">Cadastro técnico</div><h1>Máquinas e especificações</h1><div class="subheading">Dados técnicos cadastrados a partir das informações fornecidas e referências de manuais consultados.</div></div><button class="logout" id="backMachinesOverview">← Voltar</button></div>
+        <div class="machine-tech-grid">
+          <article class="tech-card"><h2>Fresadora 01</h2><div class="specs"><span><b>Fabricante:</b> KONE</span><span><b>Modelo:</b> Romi T-240</span><span><b>Aplicação:</b> Ferramentaria/fresagem</span><span><b>Adequação:</b> NR-12</span><span><b>Mesa:</b> 300 × 1.300 mm</span><span><b>Peso:</b> ~1.700 kg</span><span><b>Cursos X/Y/Z:</b> 900 / 300 / 420 mm</span><span><b>Cone:</b> ISO 40</span><span><b>Rotação:</b> 60–4.200 rpm</span><span><b>Motor eixo-árvore:</b> 5 cv</span><span><b>Avanços X/Y:</b> 24–630 mm/min</span><span><b>Avanço Z:</b> 35–470 mm/min</span><span><b>Peso admissível:</b> 200 kg</span><span><b>Dimensões:</b> 2.050 × 2.150 × 2.380 mm</span></div><h3>Características da mesa</h3><div class="specs"><span><b>Fusos X/Y:</b> 32 mm</span><span><b>Ranhuras:</b> 3 × 14 mm</span><span><b>Distância ranhuras:</b> 55 mm</span><span><b>Distância mesa/solo:</b> 910–1.330 mm</span><span><b>Suporte da mesa:</b> 700 mm</span><span><b>Refrigeração:</b> bomba 0,25 cv</span></div><div class="source-note">Fonte principal: especificações fornecidas para a Romi T-240. Os limites de monitoramento de temperatura/vibração/ruído são referências operacionais configuráveis, não limites de fabricação declarados pelo manual.</div></article>
+          <article class="tech-card"><h2>Torno Mecânico 02</h2><div class="specs"><span><b>Fabricante:</b> KONE</span><span><b>Modelo:</b> Romi T-240</span><span><b>Aplicação:</b> Ferramentaria</span><span><b>Adequação:</b> NR-12</span><span><b>Mesa:</b> 300 × 1.300 mm</span><span><b>Cursos X/Y/Z:</b> 900 / 300 / 420 mm</span><span><b>Rotação:</b> 60–4.200 rpm</span><span><b>Cone:</b> ISO 40</span><span><b>Motor principal:</b> 5 cv</span><span><b>Peso:</b> ~1.700 kg</span><span><b>Avanços X/Y:</b> 24–630 mm/min</span><span><b>Avanço Z:</b> 35–470 mm/min</span></div><h3>Monitoramento</h3><div class="specs"><span><b>Sensor:</b> Sistema Firebase</span><span><b>Dados:</b> temperatura, vibração, ruído</span><span><b>Leitura:</b> tempo real</span><span><b>Estado:</b> equipamento monitorado</span></div><div class="source-note">A Torno Mecânico 02 recebe leituras do Arduino pelo caminho sensores/fresadora02. Em rotação média/alta, o mini painel publica valores demonstrativos em controle/fresadora02/leituras.</div></article>
+          <article class="tech-card"><h2>Ferramenteira 04</h2><div class="specs"><span><b>Fabricante:</b> KONE</span><span><b>Modelo:</b> Romi T-240</span><span><b>Adequação:</b> NR-12</span><span><b>Mesa:</b> 300 × 1.300 mm</span><span><b>Cursos:</b> X 900 / Y 300 / Z 420 mm</span><span><b>Rotações:</b> 60–4.200 rpm</span><span><b>Cone:</b> ISO 40</span><span><b>Motor:</b> 5 cv</span><span><b>Avanços X/Y:</b> 24–630 mm/min</span><span><b>Avanço Z:</b> 35–470 mm/min</span><span><b>Peso:</b> ~1.700 kg</span><span><b>Peso admissível:</b> 200 kg</span></div><h3>Cabeçote</h3><div class="specs"><span><b>Bucha eixo-árvore:</b> 100 mm</span><span><b>Curso vertical:</b> 127 mm</span><span><b>Curso torpedo:</b> 400 mm</span><span><b>Inclinação cabeçote:</b> 45°</span><span><b>Giro torpedo:</b> 90° direita/esquerda</span><span><b>Inclinação mesa:</b> 90°</span></div><div class="source-note">Equipamento descrito com base nas características Romi T-240 fornecidas para o projeto.</div></article>
+          <article class="tech-card"><h2>Torno Mecânico 03</h2><div class="specs"><span><b>Fabricante:</b> ROMI</span><span><b>Modelo:</b> T 240</span><span><b>Ano informado:</b> 2011</span><span><b>Velocidade:</b> 44–2.240 rpm</span><span><b>Velocidades:</b> 20</span><span><b>Motor principal:</b> 7,5 cv</span><span><b>Altura de pontas:</b> 220 mm</span><span><b>Diâmetro sobre barramento:</b> 455 mm</span><span><b>Diâmetro sobre carro:</b> 240 mm</span><span><b>Distância entre pontas:</b> 500 ou 1.000 mm</span><span><b>Furo eixo-árvore:</b> 52 mm</span><span><b>Aplicação:</b> usinagem convencional</span></div><h3>Referência do manual</h3><div class="source-note">O manual do usuário ROMI T 240/T 350/T 500 cobre segurança, instalação, operação e manutenção; também há manual de manutenção com seção específica para “ruído e aquecimento anormais”. O manual não fornece um limite universal de temperatura/vibração para uso como alarme automático.</div></article>
+          <article class="tech-card"><h2>Torno Mecânico 05</h2><div class="specs"><span><b>Fabricante:</b> ROMI</span><span><b>Modelo:</b> Tormax 30</span><span><b>Aplicação:</b> torneamento, faceamento, roscas e manutenção</span><span><b>Velocidade:</b> 45–2.240 rpm</span><span><b>Velocidades:</b> 20</span><span><b>Motor principal:</b> 7,5 cv</span><span><b>Furo eixo-árvore:</b> 50 mm</span><span><b>Nariz:</b> ASA L0</span><span><b>Curso carro transversal:</b> 240 mm</span><span><b>Diâmetro sobre barramento:</b> 420 mm</span><span><b>Diâmetro sobre carro transversal:</b> 230 mm</span><span><b>Altura de pontas:</b> 205 mm</span></div><div class="source-note">Referência consultada: ficha ROMI Tormax 30. A ficha informa a faixa de rotação e potência, mas não estabelece limites de alarme de temperatura/vibração/ruído.</div></article>
+          <article class="tech-card"><h2>Fresadora 07</h2><div class="specs"><span><b>Fabricante:</b> KONE</span><span><b>Modelo:</b> Romi T-240</span><span><b>Aplicação:</b> fresagem convencional e ferramentaria</span><span><b>Mesa:</b> 300 × 1.300 mm</span><span><b>Cursos X/Y/Z:</b> 900 / 300 / 420 mm</span><span><b>Rotação:</b> 60–4.200 rpm</span><span><b>Cone:</b> ISO 40</span><span><b>Motor:</b> 5 cv</span><span><b>Refrigeração:</b> bomba 0,25 cv</span><span><b>Peso:</b> ~1.700 kg</span></div><h3>Dimensões</h3><div class="specs"><span><b>Altura:</b> 2.380 mm</span><span><b>Largura:</b> 2.150 mm</span><span><b>Comprimento:</b> 2.050 mm</span><span><b>Área porta aberta:</b> 3.000 × 2.200 mm</span></div><div class="source-note">Características técnicas conforme os dados fornecidos para a Romi T-240.</div></article>
+        </div>
+        </section>
+        <section id="historyPanel" class="history-panel">
+        <div class="history-toolbar"><div><div class="eyebrow">Histórico operacional</div><h1>Temperatura, vibração e ruído</h1><div class="subheading" id="historyRange"></div></div><button class="logout" id="backOverview">← Voltar</button></div>
+        <div class="chart-grid"><div class="chart-card"><h2 class="section-title">Temperatura por máquina</h2><div class="chart-wrap"><canvas id="tempChart"></canvas></div><div class="peak" id="tempPeak"></div></div><div class="chart-card"><h2 class="section-title">Vibração por máquina</h2><div class="chart-wrap"><canvas id="vibChart"></canvas></div><div class="peak" id="vibPeak"></div></div><div class="chart-card"><h2 class="section-title">Ruído por máquina</h2><div class="chart-wrap"><canvas id="noiseChart"></canvas></div><div class="peak" id="noisePeak"></div></div></div>
+      </section>
+    </main>
+  </div>
+</section>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD-stbeo7N_vBsyNa3FFILrz5PyNlHKQuE",
+  authDomain: "monitor-sensores-b1be1.firebaseapp.com",
+  databaseURL: "https://monitor-sensores-b1be1-default-rtdb.firebaseio.com",
+  projectId: "monitor-sensores-b1be1",
+  storageBucket: "monitor-sensores-b1be1.firebasestorage.app",
+  messagingSenderId: "225709909415",
+  appId: "1:225709909415:web:5f1024f6a0e88bc5288282",
+  measurementId: "G-978HLXLFYQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const database = getDatabase(app);
+
+const machines = [
+  {id:"fresadora01", name:"Fresadora 01", real:false, type:"Romi T-240"},
+  {id:"fresadora02", name:"Torno Mecânico 02", real:true, type:"Romi T-240"},
+  {id:"ferramenteira04", name:"Ferramenteira 04", real:false, type:"Romi T-240"},
+  {id:"tornomecanico03", name:"Torno Mecânico 03", real:false, type:"ROMI T 240"},
+  {id:"tornomecanico05", name:"Torno Mecânico 05", real:false, type:"ROMI Tormax 30"},
+  {id:"fresadora07", name:"Fresadora 07", real:false, type:"Romi T-240"}
+];
+
+const defaultLimits = {
+  fresadora01:{temperatura:{alerta:35,perigo:45},vibracao:{alerta:2.8,perigo:4.5},ruido:{alerta:75,perigo:85}},
+  fresadora02:{temperatura:{alerta:35,perigo:45},vibracao:{alerta:2.8,perigo:4.5},ruido:{alerta:75,perigo:85}},
+  ferramenteira04:{temperatura:{alerta:35,perigo:45},vibracao:{alerta:2.8,perigo:4.5},ruido:{alerta:75,perigo:85}},
+  tornomecanico03:{temperatura:{alerta:35,perigo:45},vibracao:{alerta:2.8,perigo:4.5},ruido:{alerta:75,perigo:85}},
+  tornomecanico05:{temperatura:{alerta:35,perigo:45},vibracao:{alerta:2.8,perigo:4.5},ruido:{alerta:75,perigo:85}},
+  fresadora07:{temperatura:{alerta:35,perigo:45},vibracao:{alerta:2.8,perigo:4.5},ruido:{alerta:75,perigo:85}}
+};
+let machineLimits = JSON.parse(localStorage.getItem("indusense_machine_limits") || "null") || structuredClone(defaultLimits);
+function getLimits(id){return machineLimits[id] || defaultLimits[id];}
+
+const simulated = {};
+machines.filter(m=>!m.real).forEach((m,i)=>{
+  simulated[m.id] = {temperatura:22+i*0.8+Math.random()*2.5,vibracao:0.8+Math.random()*1.5,ruido:38+Math.random()*12};
+});
+let firebaseData={temperatura:null,vibracao:null,ruido:null};
+let fresadora02Control={ligado:false,velocidade:null,rpm:0};
+let fresadora02ControlKnown=false;
+let fresadora02ControlMessage="Aguardando confirmação do painel da Torno Mecânico 02";
+let fresadora02RemoteValues={temperatura:null,vibracao:null,ruido:null};
+let lastFirebaseUpdate=null;
+function dataDaMaquina(m){
+  if(m.id!=="fresadora02") return m.real?firebaseData:simulated[m.id];
+
+  // Em rotação baixa, exibe as três leituras reais recebidas do Arduino.
+  // Não substitui vibração por 0 nem ruído por um valor demonstrativo.
+  if(fresadora02ControlKnown &&
+     fresadora02Control.ligado &&
+     fresadora02Control.velocidade==="baixo"){
+    return firebaseData;
+  }
+
+  // Com a máquina desligada, mantém a temperatura real e indica ruído ambiente.
+  if(fresadora02ControlKnown && !fresadora02Control.ligado) return {
+    temperatura: firebaseData.temperatura,
+    vibracao: 0,
+    ruido: fresadora02RemoteValues.ruido ?? 35
+  };
+
+  // Em rotação média/alta, aceita vibração e ruído demonstrativos do painel,
+  // usando as leituras do Arduino como alternativa quando não houver dados remotos.
+  if(fresadora02ControlKnown) return {
+    temperatura: firebaseData.temperatura,
+    vibracao: fresadora02RemoteValues.vibracao ?? firebaseData.vibracao,
+    ruido: fresadora02RemoteValues.ruido ?? firebaseData.ruido
+  };
+
+  return firebaseData;
+}
+function numericReading(value){
+  if(value===null || value===undefined || value==='' || typeof value==='boolean') return null;
+  const n=Number(value);
+  return Number.isFinite(n)?n:null;
+}
+function readMachineValues(data){
+  const d=data && typeof data==='object' ? data : {};
+  return {
+    temperatura:numericReading(d.temperatura),
+    vibracao:numericReading(d.vibracao),
+    ruido:numericReading(d.ruido)
+  };
+}
+function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+function tickSimulation(){machines.filter(m=>!m.real).forEach(m=>{const s=simulated[m.id];s.temperatura=clamp(s.temperatura+(Math.random()-.5)*.35,20,32);s.vibracao=clamp(s.vibracao+(Math.random()-.5)*.12,.4,3.8);s.ruido=clamp(s.ruido+(Math.random()-.5)*1.5,32,58);});render();}
+setInterval(tickSimulation,2500);
+function format(v,decimals=1){return v===null||v===undefined||Number.isNaN(Number(v))?"--":Number(v).toFixed(decimals)}
+function classifyMetric(value,type,machineId){
+  if(value===null||value===undefined||Number.isNaN(Number(value)))return {level:1,cls:'status-alerta',label:'Aguardando leitura'};
+  const v=Number(value), lim=getLimits(machineId)[type];
+  if(v<=lim.alerta)return {level:0,cls:'status-normal',label:'Normal'};
+  if(v<=lim.perigo)return {level:1,cls:'status-alerta',label:'Alerta'};
+  return {level:2,cls:'status-perigo',label:'Perigo'};
+}
+function machineStatus(d,m){const states=[classifyMetric(d.temperatura,'temperatura',m.id),classifyMetric(d.vibracao,'vibracao',m.id),classifyMetric(d.ruido,'ruido',m.id)];return states.reduce((worst,current)=>current.level>worst.level?current:worst,states[0]);}
+function metricDetail(label,value,unit,type,m){const st=classifyMetric(value,type,m.id),lim=getLimits(m.id)[type];return `<div class="metric"><div class="metric-label">${label}</div><div class="metric-value">${format(value,type==='ruido'?0:1)}<span class="metric-unit">${unit}</span></div><div class="metric-status"><span class="status-dot ${st.cls}"></span>${st.label}</div><div class="focus-hint">Alerta ${format(lim.alerta,type==='ruido'?0:1)} · Perigo ${format(lim.perigo,type==='ruido'?0:1)}</div></div>`}
+
+function visualSparkline(value,type,machineId){
+ const count=12, max=type==='temperatura'?50:type==='vibracao'?5:100;
+ const base=Number.isFinite(Number(value))?Number(value):0;
+ const points=Array.from({length:count},(_,i)=>{
+   const wave=Math.sin((i+1)*1.17+(machineId.length*.7))*(type==='temperatura'?2.2:type==='vibracao'?.35:4.2);
+   const trend=(i-5.5)*(type==='temperatura'?.12:type==='vibracao'?.025:.22);
+   return Math.max(0,Math.min(max,base+wave+trend));
+ });
+ const coords=points.map((v,i)=>`${(i/(count-1))*180},${54-(v/max)*46}`).join(' ');
+ const color=type==='temperatura'?'#42d3a5':type==='vibracao'?'#5b8cff':'#f6c85f';
+ return `<svg class="sparkline" viewBox="0 0 180 60" preserveAspectRatio="none" aria-label="Gráfico ilustrativo de tendência"><path class="spark-grid" d="M0 12H180 M0 32H180 M0 52H180"/><polygon class="spark-area" points="0,60 ${coords} 180,60" fill="${color}"/><polyline class="spark-line" points="${coords}" stroke="${color}"/></svg>`;
+}
+function machineIllustration(){
+ return `<div class="machine-illustration"><svg viewBox="0 0 190 115" role="img" aria-label="Ilustração de máquina industrial"><defs><linearGradient id="machineMetal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7892b5"/><stop offset="1" stop-color="#354b69"/></linearGradient></defs><ellipse cx="95" cy="103" rx="76" ry="7" fill="#07111e"/><path d="M28 91V40h19V26h46v14h20v51z" fill="url(#machineMetal)" stroke="#9bb4d4" stroke-width="1.2"/><path d="M38 42h31v38H38z" fill="#15263c" stroke="#6f8baa"/><path d="M76 43h27v12H76z" fill="#42d3a5"/><path d="M86 55h8v20h-8z" fill="#c5d7eb"/><path d="M72 75h37v7H72z" fill="#5b8cff"/><path d="M18 91h136v8H18z" fill="#3a506d" stroke="#8ba5c5"/><path d="M48 99v7h10v-7 M125 99v7h10v-7" fill="#526b8a"/><path d="M116 47h36v36h-36z" fill="#1c2d45" stroke="#6f8baa"/><circle cx="134" cy="65" r="10" fill="#0b1423" stroke="#42d3a5" stroke-width="2"/><path d="M134 57v8l5 3" fill="none" stroke="#42d3a5" stroke-width="2" stroke-linecap="round"/><path d="M48 19h44v7H48z" fill="#5b8cff"/><path d="M62 19v-8h17v8" fill="none" stroke="#9bb4d4" stroke-width="3"/><circle cx="46" cy="52" r="3" fill="#42d3a5"/><circle cx="46" cy="63" r="3" fill="#f6c85f"/></svg></div>`;
+}
+function visualMetricCard(label,value,unit,type,m){
+  const max=type==='temperatura'?50:type==='vibracao'?5:100;
+  const numeric=Number.isFinite(Number(value))?Number(value):0;
+  const pct=Math.max(0,Math.min(100,(numeric/max)*100));
+  const st=classifyMetric(value,type,m.id);
+  const color=st.level===2?'#ef4444':st.level===1?'#f59e0b':(type==='temperatura'?'#10b981':type==='vibracao'?'#3b82f6':'#8b5cf6');
+  const limits=getLimits(m.id)[type];
+  const alertPct=Math.max(0,Math.min(100,(limits.alerta/max)*100));
+  const dangerPct=Math.max(0,Math.min(100,(limits.perigo/max)*100));
+  return `<div class="machine-visual-card bar-visual-card">
+    <h4>${label} <span class="bar-unit">${unit}</span></h4>
+    <div class="bar-reading-row"><div class="visual-reading">${format(value,type==='ruido'?0:1)} <small>${unit}</small></div><span class="bar-status" style="background:${color}18;color:${color}">${st.label}</span></div>
+    <div class="bar-plain-language">${st.level===2?'Limite de perigo atingido: peça avaliação da equipe.':st.level===1?'Faixa de atenção: acompanhe a leitura.':'Faixa normal: leitura abaixo do limite de alerta.'}</div>
+    <div class="simple-bar" role="img" aria-label="${label}: ${format(value,type==='ruido'?0:1)} ${unit}, escala de 0 a ${max}">
+      <div class="simple-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${color},${color}dd)"></div>
+      <span class="bar-marker alert-marker" style="left:${alertPct}%" title="Início da faixa de alerta"></span>
+      <span class="bar-marker danger-marker" style="left:${dangerPct}%" title="Início da faixa de perigo"></span>
+    </div>
+    <div class="bar-scale"><span>0 ${unit}</span><strong>${Math.round(pct)}% da escala</strong><span>${max} ${unit}</span></div>
+    <div class="bar-explain"><span><i class="legend-dot" style="background:#10b981"></i>Normal</span><span><i class="legend-dot" style="background:#f59e0b"></i>Atenção a partir de ${limits.alerta}</span><span><i class="legend-dot" style="background:#ef4444"></i>Perigo a partir de ${limits.perigo}</span></div>
+  </div>`;
+}
+
+function machineCard(m){
+ const d=dataDaMaquina(m),hasValues=Object.values(d).some(v=>v!==null&&v!==undefined&&Number.isFinite(Number(v))),online=m.real&&(m.id==="fresadora02"?(!!fresadora02Control.ligado&&(fresadora02Control.velocidade==="baixo"?!!lastFirebaseUpdate:hasValues)):!!lastFirebaseUpdate)?true:!m.real,status=machineStatus(d,m),lim=getLimits(m.id);
+ return `<article class="machine ${m.real?'real':''}" data-machine-id="${m.id}" tabindex="0" role="button" aria-label="Abrir ${m.name} em destaque">
+  <div class="machine-head"><div><div class="machine-name">${m.name}</div><div class="machine-code">${m.type} · ID: ${m.id.toUpperCase()}</div></div><span class="badge ${online?'online':'simulated'}">${m.real?(online?'● Online':'○ Aguardando'):'Simulação'}</span></div>
+  <div class="metrics">${metricDetail('Temperatura',d.temperatura,'°C','temperatura',m)}${metricDetail('Vibração',d.vibracao,'mm/s','vibracao',m)}${metricDetail('Ruído',d.ruido,'dB(A)','ruido',m)}</div>
+  <div class="machine-selected-details"><div class="machine-details-intro"><div class="intro-icon">📊</div><div><strong>Painel detalhado da máquina</strong><p>Aqui você vê o estado atual, compara os valores com os limites e entende quando é preciso acompanhar o equipamento.</p></div><span class="intro-chip">Leitura visual</span></div><div class="detail-grid"><div class="detail-box"><h4>Status geral</h4><p><span class="status-dot ${status.cls}"></span><strong>${status.label}</strong></p><p>${status.level===2?'Ação de manutenção deve ser avaliada.':status.level===1?'Atenção: acompanhar tendência e condição de operação.':'Parâmetros dentro das referências configuradas.'}</p></div><div class="detail-box"><h4>Limites configurados</h4><div class="limit-line"><span>Temperatura</span><strong>${lim.temperatura.alerta} / ${lim.temperatura.perigo} °C</strong></div><div class="limit-line"><span>Vibração</span><strong>${lim.vibracao.alerta} / ${lim.vibracao.perigo} mm/s</strong></div><div class="limit-line"><span>Ruído</span><strong>${lim.ruido.alerta} / ${lim.ruido.perigo} dB(A)</strong></div></div><div class="detail-box"><h4>Equipamento</h4><p><strong>${m.type}</strong></p><p>${m.real?(m.id==='fresadora02'?(fresadora02Control.velocidade==='baixo'?'Arduino via Firebase':`Demonstração · rotação ${fresadora02Control.velocidade==='medio'?'média':'alta'}`):'Leitura do Arduino via Firebase'):'Valores simulados para demonstração'}</p><p>Atualização: ${m.real&&lastFirebaseUpdate?new Date(lastFirebaseUpdate).toLocaleTimeString('pt-BR'):'contínua'}</p></div></div><div class="machine-details-guide"><div><strong>🟢 Normal</strong>Valor dentro da faixa configurada. Continue acompanhando.</div><div><strong>🟡 Atenção</strong>O valor chegou à faixa de alerta. Observe a tendência.</div><div><strong>🔴 Perigo</strong>O limite de perigo foi alcançado. Avalie a máquina com a equipe responsável.</div></div><div class="machine-visuals"><div class="machine-visual-card"><h4>Visão do equipamento</h4>${machineIllustration()}<div class="machine-visual-caption">${m.name} · ${m.type}</div><div class="visual-legend"><span><i class="legend-dot" style="background:#42d3a5"></i>Normal</span><span><i class="legend-dot" style="background:#f6c85f"></i>Alerta</span><span><i class="legend-dot" style="background:#ff6b7a"></i>Perigo</span></div></div>${visualMetricCard('Temperatura',d.temperatura,'°C','temperatura',m)}${visualMetricCard('Vibração',d.vibracao,'mm/s','vibracao',m)}${visualMetricCard('Ruído',d.ruido,'dB(A)','ruido',m)}</div><div class="presentation-note"><strong>Como interpretar:</strong> os mostradores comparam a leitura atual com uma escala visual. As linhas são tendências ilustrativas, não um histórico real armazenado. Somente a Torno Mecânico 02 recebe dados do Arduino/Firebase; as demais máquinas usam valores simulados para apresentação.</div><div class="machine-actions"><button class="small-btn config-limits" type="button" data-id="${m.id}">⚙ Configurar limites</button><span class="focus-hint">Clique novamente para fechar o destaque</span></div><div class="tech-note">Os limites exibidos são referências operacionais configuráveis. Vibração usa referências de severidade baseadas em ISO 10816; ruído usa referência ocupacional da NR-15. Temperatura é um limite de acompanhamento do protótipo e deve ser validado com fabricante/manutenção.</div></div>
+  <div class="machine-footer"><span>${m.real?(m.id==='fresadora02'&&fresadora02Control.velocidade!=='baixo'?'● Valores enviados pelo mini painel':'<span class="real-tag">● Dados do Arduino</span>'):'Valores operacionais simulados'}</span><span>${m.real&&lastFirebaseUpdate?new Date(lastFirebaseUpdate).toLocaleTimeString('pt-BR'):'Atualização contínua'}</span></div>
+ </article>`;
+}
+let selectedMachineId=null;
+function updateMachineFocus(){const grid=document.getElementById("machineGrid");grid.classList.toggle("has-focus",!!selectedMachineId);grid.querySelectorAll(".machine").forEach(card=>card.classList.toggle("selected",card.dataset.machineId===selectedMachineId));}
+function bindMachineCards(){document.querySelectorAll("#machineGrid .machine").forEach(card=>{const select=()=>{const id=card.dataset.machineId;selectedMachineId=selectedMachineId===id?null:id;updateMachineFocus();};card.addEventListener("click",e=>{if(e.target.closest('.config-limits'))return;select();});card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}});});document.querySelectorAll('.config-limits').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();openLimitsModal(btn.dataset.id);}));}
+function render(){document.getElementById("machineGrid").innerHTML=machines.map(machineCard).join("");bindMachineCards();updateMachineFocus();const states=machines.map(m=>machineStatus(dataDaMaquina(m),m).level);const danger=states.filter(x=>x===2).length,alerta=states.filter(x=>x===1).length;document.getElementById("alertCount").textContent=danger+alerta;const pill=document.getElementById('alertPill');pill.className='alert-pill '+(danger?'perigo':alerta?'alerta':'normal');pill.textContent=danger?`● ${danger} em perigo`:alerta?`● ${alerta} em alerta`:'● Operação normal';document.getElementById("connectedMachines").textContent=(fresadora02Control.ligado && (fresadora02Control.velocidade!=="baixo" || !!lastFirebaseUpdate))?"1":"0";const temps=machines.map(m=>dataDaMaquina(m).temperatura).filter(v=>v!=null);document.getElementById("avgTemp").textContent=temps.length?(temps.reduce((a,b)=>a+Number(b),0)/temps.length).toFixed(1)+"°":"--";document.getElementById("lastUpdate").textContent=new Date().toLocaleTimeString("pt-BR");const diag=document.getElementById("firebaseDiagnostics");if(diag){diag.textContent="Painel de monitoramento industrial ativo.";}}
+render();
+
+let editingMachineId=null;
+function openLimitsModal(id){editingMachineId=id;const m=machines.find(x=>x.id===id),l=getLimits(id);document.getElementById('limitsTitle').textContent=`Limites — ${m.name}`;document.getElementById('limTempA').value=l.temperatura.alerta;document.getElementById('limTempP').value=l.temperatura.perigo;document.getElementById('limVibA').value=l.vibracao.alerta;document.getElementById('limVibP').value=l.vibracao.perigo;document.getElementById('limNoiseA').value=l.ruido.alerta;document.getElementById('limNoiseP').value=l.ruido.perigo;document.getElementById('limitsModal').classList.add('open');}
+function closeLimitsModal(){editingMachineId=null;document.getElementById('limitsModal').classList.remove('open');}
+document.getElementById('cancelLimits').addEventListener('click',closeLimitsModal);document.getElementById('limitsModal').addEventListener('click',e=>{if(e.target.id==='limitsModal')closeLimitsModal();});document.getElementById('saveLimits').addEventListener('click',()=>{const vals={temperatura:{alerta:Number(limTempA.value),perigo:Number(limTempP.value)},vibracao:{alerta:Number(limVibA.value),perigo:Number(limVibP.value)},ruido:{alerta:Number(limNoiseA.value),perigo:Number(limNoiseP.value)}};if(Object.values(vals).some(x=>x.alerta<=0||x.perigo<=x.alerta)){alert('Verifique os limites: o valor de Perigo deve ser maior que o valor de Alerta.');return;}machineLimits[editingMachineId]=vals;localStorage.setItem('indusense_machine_limits',JSON.stringify(machineLimits));closeLimitsModal();render();});
+const sensoresRef = ref(database, "sensores/fresadora02");
+
+onValue(sensoresRef, snapshot => {
+  firebaseData = readMachineValues(snapshot.val());
+  // Só considera a Torno Mecânico 02 online quando existe ao menos uma leitura numérica real.
+  lastFirebaseUpdate = Object.values(firebaseData).some(v=>v!==null) ? Date.now() : null;
+  render();
+}, error => {
+  lastFirebaseUpdate = null;
+  console.error("Erro ao ler sensores/fresadora02:", error);
+  render();
+});
+
+// O Index é somente de monitoramento: não envia comandos nem publica leituras.
+// Os únicos comandos são enviados pelo painel PAINEL_CONTROLE_FRESADORA02_2026.html.
+const controleRef = ref(database, "controle/fresadora02");
+const controleLeiturasRef = ref(database, "controle/fresadora02/leituras");
+
+onValue(controleRef, snapshot => {
+  const c = snapshot.val() || {};
+  const known = snapshot.exists() && c.atualizadoEm !== undefined && c.atualizadoEm !== null;
+  fresadora02ControlKnown = known;
+  const ligado = c.ligado === true || c.ligado === 1 || String(c.ligado).toLowerCase() === "true";
+  const raw = String(c.velocidade || "").toLowerCase().trim();
+  const aliases = {baixa:"baixo", baixa_rotacao:"baixo", "média":"medio", media:"medio", media_rotacao:"medio", alta:"alto", alta_rotacao:"alto"};
+  const velocidade = aliases[raw] || raw;
+
+  if (!known) {
+    fresadora02Control = {ligado:false, velocidade:null, rpm:0};
+    fresadora02ControlMessage = "Comando do painel ainda não confirmado; exibindo leituras disponíveis.";
+  } else if (!ligado || !["baixo","medio","alto"].includes(velocidade)) {
+    fresadora02Control = {ligado:false, velocidade:null, rpm:0};
+    fresadora02ControlMessage = "Painel de controle informa: máquina desligada.";
+  } else {
+    fresadora02Control = {
+      ligado:true,
+      velocidade,
+      rpm:Number(c.rpm) || (velocidade === "baixo" ? 1200 : velocidade === "medio" ? 2400 : 3600)
+    };
+    fresadora02ControlMessage = `Comando recebido do painel: ligada · rotação ${velocidade}.`;
+  }
+  render();
+}, error => {
+  console.error("Erro ao ler controle/fresadora02:", error);
+  fresadora02ControlKnown = false;
+  fresadora02ControlMessage = `Sem acesso ao controle/fresadora02 (${error.code || error.message}). Confira as regras do Realtime Database.`;
+  fresadora02Control = {ligado:false, velocidade:null, rpm:0};
+  render();
+});
+
+// O Index somente recebe leituras demonstrativas publicadas pelo painel.
+onValue(controleLeiturasRef, snapshot => {
+  fresadora02RemoteValues = readMachineValues(snapshot.val());
+  render();
+}, error => {
+  console.error("Erro ao ler controle/fresadora02/leituras:", error);
+  fresadora02RemoteValues = {temperatura:null,vibracao:null,ruido:null};
+  fresadora02ControlMessage = `Sem acesso às leituras de média/alta (${error.code || error.message}). Confira as regras do Realtime Database.`;
+  render();
+});
+
+
+let charts={};
+function historicalSeries(metric){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const labels=[]; for(let i=7;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);labels.push(d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}));}
+  const colors=['#3b82f6','#10b981','#f59e0b','#a855f7','#ef4444','#06b6d4'];
+  return {labels,datasets:machines.map((m,mi)=>({label:m.name,data:labels.map((_,di)=>{
+    const seed=(mi+2)*17+(di+3)*13;
+    if(metric==='temperatura') return +(23+mi*.9+Math.sin(seed)*3+((seed*7)%10)/5).toFixed(1);
+    if(metric==='vibracao') return +(0.7+mi*.18+Math.abs(Math.sin(seed))*1.8+((seed*5)%7)/10).toFixed(2);
+    return +(39+mi*2+Math.abs(Math.sin(seed))*15+((seed*3)%8)).toFixed(0);
+  }),backgroundColor:colors[mi],borderColor:colors[mi],borderWidth:1,borderRadius:6,borderSkipped:false,maxBarThickness:24}) )};
+}
+function peakText(data,unit){let best={v:-Infinity,l:''};data.datasets.forEach(ds=>ds.data.forEach((v,i)=>{if(v>best.v)best={v,l:`${ds.label} — ${data.labels[i]}`} }));return `Maior valor mostrado: ${best.l} (${best.v} ${unit}). Histórico demonstrativo, não uma medição real armazenada.`;}
+function makeChart(id,data,unit){
+  if(charts[id])charts[id].destroy();
+  const light=document.body.classList.contains('access-light');
+  const textColor=light?'#334155':'#dbeafe',gridColor=light?'#e2e8f0':'#334155';
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'bar',data,
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'bottom',labels:{color:textColor,usePointStyle:true,pointStyle:'rectRounded',padding:16,font:{size:12}}},
+        tooltip:{backgroundColor:light?'#ffffff':'#111827',titleColor:textColor,bodyColor:textColor,borderColor:gridColor,borderWidth:1,padding:12,
+          callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y} ${unit}`}}
+      },
+      scales:{
+        x:{title:{display:true,text:'Dia',color:textColor,font:{weight:'bold'}},ticks:{color:textColor,maxRotation:0,minRotation:0},grid:{display:false}},
+        y:{beginAtZero:true,title:{display:true,text:unit,color:textColor,font:{weight:'bold'}},ticks:{color:textColor},grid:{color:gridColor}}
+      }
+    }
+  });
+}
+function setActiveNav(activeId){document.querySelectorAll('.nav-item').forEach(btn=>btn.classList.remove('active')); const btn=document.getElementById(activeId); if(btn) btn.classList.add('active');}
+function showMachines(){setActiveNav('machinesNav');document.querySelector('.heading-row').style.display='none';document.querySelector('.overview').style.display='none';document.querySelector('.section-title').style.display='none';document.getElementById('machineGrid').style.display='none';document.getElementById('historyPanel').classList.remove('active');document.getElementById('machinesPanel').classList.add('active');}
+function showHistory(){setActiveNav('historyNav');document.getElementById('machinesPanel').classList.remove('active');document.querySelector('.heading-row').style.display='none';document.querySelector('.overview').style.display='none';document.querySelector('.section-title').style.display='none';document.getElementById('machineGrid').style.display='none';document.getElementById('historyPanel').classList.add('active');const t=historicalSeries('temperatura'),v=historicalSeries('vibracao'),n=historicalSeries('ruido');document.getElementById('historyRange').textContent=`Período: ${t.labels[0]} até ${t.labels[7]} — dados históricos demonstrativos por máquina`;makeChart('tempChart',t,'°C');makeChart('vibChart',v,'mm/s');makeChart('noiseChart',n,'dB');document.getElementById('tempPeak').textContent=peakText(t,'°C');document.getElementById('vibPeak').textContent=peakText(v,'mm/s');document.getElementById('noisePeak').textContent=peakText(n,'dB');}
+function showOverview(){setActiveNav('overviewNav');document.getElementById('machinesPanel').classList.remove('active');document.getElementById('historyPanel').classList.remove('active');document.querySelector('.heading-row').style.display='flex';document.querySelector('.overview').style.display='grid';document.querySelector('.section-title').style.display='block';document.getElementById('machineGrid').style.display='grid';}
+function hideHistory(){showOverview();}
+document.getElementById('historyNav').addEventListener('click',showHistory);document.getElementById('machinesNav').addEventListener('click',showMachines);document.getElementById('backOverview').addEventListener('click',showOverview);document.getElementById('backMachinesOverview').addEventListener('click',showOverview);document.querySelectorAll('.nav-item')[0].addEventListener('click',showOverview);
+document.getElementById("loginForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const error=document.getElementById("loginError");
+  error.textContent="";
+  try{
+    await signInWithEmailAndPassword(auth,document.getElementById("email").value,document.getElementById("password").value);
+  }catch(err){
+    error.textContent="E-mail ou senha inválidos. Verifique as credenciais.";
+  }
+});
+document.getElementById("logoutBtn").addEventListener("click",()=>signOut(auth));
+onAuthStateChanged(auth,user=>{
+  document.getElementById("loginScreen").classList.toggle("hidden",!!user);
+  document.getElementById("app").classList.toggle("hidden",!user);
+  const accessButton=document.getElementById("accessibilityToggle");
+  accessButton.hidden=!user;
+  if(!user){
+    document.getElementById("accessibilityPanel").classList.remove("open");
+    accessButton.setAttribute("aria-expanded","false");
+  }
+  if(user) document.getElementById("userEmail").textContent=user.email || "Usuário";
+});
+</script>
+
+<div id="limitsModal" class="modal-backdrop"><div class="limits-modal"><h2 id="limitsTitle">Configurar limites</h2><div class="modal-sub">Defina os valores a partir dos quais o sistema exibirá Alerta e Perigo para esta máquina.</div><div class="limit-form"><label>Temperatura — Alerta<input id="limTempA" type="number" step="0.1"></label><label>Temperatura — Perigo<input id="limTempP" type="number" step="0.1"></label><label>Vibração — Alerta<input id="limVibA" type="number" step="0.1"></label><label>Vibração — Perigo<input id="limVibP" type="number" step="0.1"></label><label>Ruído — Alerta<input id="limNoiseA" type="number" step="1"></label><label>Ruído — Perigo<input id="limNoiseP" type="number" step="1"></label></div><div class="tech-note">Referências iniciais do protótipo: vibração 2,8/4,5 mm/s como faixas de acompanhamento; ruído 75/85 dB(A), sendo 85 dB(A) o limite de tolerância de 8 h da NR-15. Esses valores não substituem avaliação técnica, manual do fabricante ou análise de risco.</div><div class="modal-actions"><button class="small-btn" id="cancelLimits">Cancelar</button><button class="save-btn" id="saveLimits">Salvar limites</button></div></div></div>
+
+
+
+<section id="accessibilityPanel" aria-label="Opções de acessibilidade">
+  <h2 id="accessTitle">Acessibilidade</h2>
+  <div class="access-row"><label id="accessThemeLabel" for="accessTheme">🎨 Tema</label><select id="accessTheme"><option value="light">☀️ Claro</option><option value="dark">🌙 Escuro</option></select></div>
+  <div class="access-row"><label id="accessSizeLabel" for="accessSize">🔠 Tamanho da fonte</label><select id="accessSize"><option value="normal">Normal</option><option value="large">Grande</option><option value="xlarge">Muito grande</option></select></div>
+  <div class="access-row"><label id="accessFontLabel" for="accessFont">🅰️ Estilo da letra</label><select id="accessFont"><option value="normal">Padrão</option><option value="serif">Serifada</option><option value="dyslexic">Leitura facilitada</option></select></div>
+  <div class="access-row"><label id="accessLangLabel" for="accessLanguage">🌐 Idioma</label><select id="accessLanguage"><option value="pt">🇧🇷 Português</option><option value="en">🇺🇸 English</option><option value="es">🇪🇸 Español</option></select></div>
+  <div class="access-section-title" id="accessPersonalTitle">🎨 Personalização da página</div>
+  <div class="access-row"><label id="accessPaletteLabel" for="accessPalette">Paleta de cores</label><select id="accessPalette" class="palette-select"><option value="blue">🔵 Azul profissional</option><option value="green">🟢 Verde industrial</option><option value="purple">🟣 Roxo moderno</option><option value="orange">🟠 Laranja energia</option><option value="pink">🌸 Rosa vibrante</option><option value="custom">Personalizada</option></select></div>
+  <div class="color-row"><label id="accessBgLabel" for="accessPageBg">Cor de fundo da página</label><input id="accessPageBg" type="color" value="#f2f7ff" aria-label="Cor de fundo da página"></div>
+  <div class="color-row"><label id="accessAccentLabel" for="accessAccent">Cor de destaque</label><input id="accessAccent" type="color" value="#315fce" aria-label="Cor de destaque"></div>
+  <div class="access-buttons"><button type="button" id="accessContrast" aria-pressed="false">◐ Alto contraste</button><button type="button" id="accessReset">↺ Restaurar</button></div>
+  <p class="access-help" id="accessHelp">As preferências ficam salvas neste navegador.</p>
+</section>
+<script id="accessibilityScript">
+(function(){
+ const body=document.body,panel=document.getElementById('accessibilityPanel'),toggle=document.getElementById('accessibilityToggle');
+ const theme=document.getElementById('accessTheme'),size=document.getElementById('accessSize'),font=document.getElementById('accessFont'),lang=document.getElementById('accessLanguage'),contrast=document.getElementById('accessContrast');
+ const palette=document.getElementById('accessPalette'),pageBg=document.getElementById('accessPageBg'),accent=document.getElementById('accessAccent');
+ const pairs=[
+ ['Monitoramento industrial','Industrial monitoring','Monitoreo industrial'],
+ ['Acompanhe temperatura, vibração e ruído das máquinas em tempo real, com uma interface centralizada para sua operação.','Monitor machine temperature, vibration, and noise in real time through a centralized operating interface.','Supervisa la temperatura, vibración y ruido de las máquinas en tiempo real desde una interfaz centralizada.'],
+ ['EXPOTEC SENAI 2026, TURMA DE OPERAÇÃO DE MÁQUINAS.','SENAI EXPOTEC 2026, MACHINE OPERATION CLASS.','EXPOTEC SENAI 2026, CLASE DE OPERACIÓN DE MÁQUINAS.'],
+ ['Sistema de Monitoramento Industrial desenvolvido pela turma de Operação de Máquinas e Ferramentas convencinais da unidade Senai CFP Alvimar Carneiro de Rezende com o objetivo de apresentar nossa ideia de inovação para a indústria.','Industrial monitoring system developed by the Machine and Tool Operation class at SENAI CFP Alvimar Carneiro de Rezende to present an innovation idea for industry.','Sistema de monitoreo industrial desarrollado por la clase de Operación de Máquinas y Herramientas del SENAI CFP Alvimar Carneiro de Rezende para presentar una idea de innovación para la industria.'],
+ ['Central de monitoramento','Monitoring center','Centro de monitoreo'],['Sistema operacional','System status','Estado del sistema'],['Sair','Sign out','Salir'],['Navegação','Navigation','Navegación'],['Visão geral','Overview','Vista general'],['Máquinas','Machines','Máquinas'],['Histórico','History','Historial'],['Conexão','Connection','Conexión'],['Sistema de Monitoramento','Monitoring System','Sistema de monitoreo'],['Conectado','Connected','Conectado'],
+ ['Visão geral','Overview','Vista general'],['Parque de máquinas','Machine park','Parque de máquinas'],['Acompanhamento operacional das máquinas cadastradas.','Operational monitoring of registered machines.','Seguimiento operativo de las máquinas registradas.'],['Atualização automática','Automatic updates','Actualización automática'],['Máquinas cadastradas','Registered machines','Máquinas registradas'],['Ativas no painel','Active on dashboard','Activas en el panel'],['Conectadas ao Sistema','Connected to system','Conectadas al sistema'],['Leitura em tempo real','Real-time reading','Lectura en tiempo real'],['Temperatura média','Average temperature','Temperatura media'],['Entre as máquinas simuladas','Among simulated machines','Entre las máquinas simuladas'],['Última atualização','Last update','Última actualización'],['Dados do painel','Dashboard data','Datos del panel'],['máquinas necessitam de atenção neste momento','machines need attention right now','máquinas necesitan atención en este momento'],['Operação normal','Normal operation','Operación normal'],['Clique em uma máquina para abrir o painel visual completo com indicadores, gráficos e estado operacional.','Click a machine to open its full visual dashboard with indicators, charts, and operating status.','Haz clic en una máquina para abrir su panel visual completo con indicadores, gráficos y estado operativo.'],
+ ['Cadastro técnico','Technical specifications','Ficha técnica'],['Máquinas e especificações','Machines and specifications','Máquinas y especificaciones'],['Dados técnicos cadastrados a partir das informações fornecidas e referências de manuais consultados.','Technical data entered from supplied information and consulted manual references.','Datos técnicos registrados a partir de la información proporcionada y manuales consultados.'],['Voltar','Back','Volver'],['Características da mesa','Table characteristics','Características de la mesa'],['Monitoramento','Monitoring','Monitoreo'],['Sensor: Sistema Firebase','Sensor: Firebase system','Sensor: sistema Firebase'],['Dados: temperatura, vibração, ruído','Data: temperature, vibration, noise','Datos: temperatura, vibración, ruido'],['Leitura: tempo real','Reading: real time','Lectura: tiempo real'],['Estado: equipamento monitorado','Status: equipment monitored','Estado: equipo monitorizado'],['Cabeçote','Head','Cabezal'],['Referência do manual','Manual reference','Referencia del manual'],['Dimensões','Dimensions','Dimensiones'],['Histórico operacional','Operating history','Historial operativo'],['Temperatura, vibração e ruído','Temperature, vibration, and noise','Temperatura, vibración y ruido'],['Temperatura por máquina','Temperature by machine','Temperatura por máquina'],['Vibração por máquina','Vibration by machine','Vibración por máquina'],['Ruído por máquina','Noise by machine','Ruido por máquina'],['Visão do equipamento','Equipment view','Vista del equipo'],['Normal','Normal','Normal'],['Alerta','Warning','Alerta'],['Perigo','Danger','Peligro'],['Configurar limites','Configure limits','Configurar límites'],['Clique novamente para fechar o destaque','Click again to close highlight','Haz clic de nuevo para cerrar el resaltado'],['Defina os valores a partir dos quais o sistema exibirá Alerta e Perigo para esta máquina.','Set the values at which the system will display Warning and Danger for this machine.','Define los valores a partir de los cuales el sistema mostrará Alerta y Peligro para esta máquina.'],['Cancelar','Cancel','Cancelar'],['Salvar limites','Save limits','Guardar límites'],['Temperatura — Alerta','Temperature — Warning','Temperatura — Alerta'],['Temperatura — Perigo','Temperature — Danger','Temperatura — Peligro'],['Vibração — Alerta','Vibration — Warning','Vibración — Alerta'],['Vibração — Perigo','Vibration — Danger','Vibración — Peligro'],['Ruído — Alerta','Noise — Warning','Ruido — Alerta'],['Ruído — Perigo','Noise — Danger','Ruido — Peligro'],['Sistema de supervisão • Ambiente protegido','Monitoring system • Secure environment','Sistema de supervisión • Entorno protegido'],['Fazer Login','Log in','Iniciar sesión'],['Use suas credenciais para acessar o monitoramento.','Use your credentials to access monitoring.','Usa tus credenciales para acceder al monitoreo.'],['E-mail','Email','Correo electrónico'],['Senha','Password','Contraseña'],['Entrar','Sign in','Entrar'],['Torno Mecânico 02','Mechanical Lathe 02','Torno Mecánico 02'],['Torno Mecânico 03','Mechanical Lathe 03','Torno Mecánico 03'],['Torno Mecânico 05','Mechanical Lathe 05','Torno Mecánico 05'],['Fresadora 01','Milling Machine 01','Fresadora 01'],['Fresadora 07','Milling Machine 07','Fresadora 07'],['Ferramenteira 04','Toolroom Machine 04','Máquina herramienta 04'],
+ ['Temperatura','Temperature','Temperatura'],['Vibração','Vibration','Vibración'],['Ruído','Noise','Ruido'],['Sensor','Sensor','Sensor'],['Dados','Data','Datos'],['Leitura','Reading','Lectura'],['Estado','Status','Estado'],['tempo real','real time','tiempo real'],['não há dados','no data available','no hay datos'],['sem dados','no data','sin datos'],['Simulado','Simulated','Simulado'],['Real','Real','Real'],['Online','Online','En línea'],['Offline','Offline','Desconectado'],
+ ['Painel detalhado da máquina','Detailed machine dashboard','Panel detallado de la máquina'],['Aqui você vê o estado atual, compara os valores com os limites e entende quando é preciso acompanhar o equipamento.','Here you can see the current status, compare readings with limits, and understand when the equipment needs attention.','Aquí puedes ver el estado actual, comparar los valores con los límites y saber cuándo hay que revisar el equipo.'],['Leitura visual','Visual reading','Lectura visual'],['Valor dentro da faixa configurada. Continue acompanhando.','Value is within the configured range. Keep monitoring.','El valor está dentro del rango configurado. Continúa supervisando.'],['O valor chegou à faixa de alerta. Observe a tendência.','The reading reached the warning range. Watch the trend.','El valor llegó al rango de alerta. Observa la tendencia.'],['O limite de perigo foi alcançado. Avalie a máquina com a equipe responsável.','The danger limit has been reached. Assess the machine with the responsible team.','Se alcanzó el límite de peligro. Evalúa la máquina con el equipo responsable.'],
+ ['Período:','Period:','Período:'],['até','to','hasta'],['dados históricos demonstrativos por máquina','illustrative historical data by machine','datos históricos ilustrativos por máquina'],['Maior valor mostrado','Highest value shown','Valor máximo mostrado'],['dados demonstrativos','demonstration data','datos demostrativos'],['em perigo','in danger','en peligro'],['em alerta','in warning','en alerta'],['Parâmetros dentro das referências configuradas.','Values are within the configured references.','Los valores están dentro de las referencias configuradas.'],['Ação de manutenção deve ser avaliada.','Maintenance action should be assessed.','Se debe evaluar una acción de mantenimiento.'],['Atenção: acompanhar tendência e condição de operação.','Warning: monitor the trend and operating condition.','Atención: supervisa la tendencia y las condiciones de operación.'],
+ ['Leitura dentro da faixa esperada.','Reading is within the expected range.','La lectura está dentro del rango esperado.'],['Confira a leitura e acompanhe a evolução.','Check the reading and monitor its progress.','Comprueba la lectura y observa su evolución.'],['Verifique a condição do equipamento com a equipe responsável.','Check the equipment condition with the responsible team.','Comprueba el estado del equipo con el equipo responsable.'],['Acessibilidade','Accessibility','Accesibilidad'],['Tema','Theme','Tema'],['Claro','Light','Claro'],['Escuro','Dark','Oscuro'],['Tamanho da fonte','Font size','Tamaño de fuente'],['Grande','Large','Grande'],['Muito grande','Extra large','Muy grande'],['Estilo da letra','Font style','Tipo de letra'],['Padrão','Default','Predeterminado'],['Serifada','Serif','Serif'],['Leitura facilitada','Easy reading','Lectura fácil'],['Idioma','Language','Idioma'],['Alto contraste','High contrast','Alto contraste'],['Restaurar','Reset','Restablecer'],['As preferências ficam salvas neste navegador.','Your preferences are saved in this browser.','Las preferencias se guardan en este navegador.'],['Personalização da página','Page customization','Personalización de la página'],['Paleta de cores','Color palette','Paleta de colores'],['Cor de fundo da página','Page background color','Color de fondo de la página'],['Cor de destaque','Accent color','Color de destaque'],['Azul profissional','Professional blue','Azul profesional'],['Verde industrial','Industrial green','Verde industrial'],['Roxo moderno','Modern purple','Morado moderno'],['Laranja energia','Energy orange','Naranja energía'],['Rosa vibrante','Vibrant pink','Rosa vibrante'],['Personalizada','Custom','Personalizada']
+ ];
+ const ordered=pairs.slice().sort((a,b)=>Math.max(b[0].length,b[1].length,b[2].length)-Math.max(a[0].length,a[1].length,a[2].length));
+ const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+ function replacePhrase(text,phrase,replacement){
+   if(!phrase || phrase===replacement)return text;
+   const isWordStart=/^[\p{L}\p{N}]/u.test(phrase), isWordEnd=/[\p{L}\p{N}]$/u.test(phrase);
+   const left=isWordStart?'(?<![\\p{L}\\p{N}])':'';
+   const right=isWordEnd?'(?![\\p{L}\\p{N}])':'';
+   try{return text.replace(new RegExp(left+esc(phrase)+right,'giu'),replacement);}
+   catch(e){return text.split(phrase).join(replacement);}
+ }
+ function translateText(value,target){
+   let out=String(value);
+   // First normalize known translations to Portuguese; phrase boundaries prevent corrupting words.
+   for(const [pt,en,es] of ordered){
+     out=replacePhrase(out,en,pt);
+     out=replacePhrase(out,es,pt);
+   }
+   if(target==='pt')return out;
+   for(const [pt,en,es] of ordered)out=replacePhrase(out,pt,target==='en'?en:es);
+   return out;
+ }
+ const originalNodes=new WeakMap();
+ function translateNode(node){
+   if(!node || node.nodeType!==Node.TEXT_NODE || !node.parentElement)return;
+   if(node.parentElement.closest('script,style,textarea,code,pre,#accessibilityPanel'))return;
+   if(!originalNodes.has(node))originalNodes.set(node,node.nodeValue);
+   const current=node.nodeValue;
+   if(!current.trim())return;
+   const translated=translateText(current,lang.value);
+   if(translated!==current)node.nodeValue=translated;
+ }
+ function translateAll(root){
+   if(!root)return;
+   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+   let n;while((n=walker.nextNode()))translateNode(n);
+   if(root.nodeType===Node.ELEMENT_NODE){
+     const elements=[root,...root.querySelectorAll('input[placeholder],input[aria-label],button[aria-label]')];
+     elements.forEach(el=>['placeholder','aria-label','title'].forEach(attr=>{
+       if(!el.hasAttribute(attr))return;
+       const key='data-i18n-original-'+attr;
+       if(!el.hasAttribute(key))el.setAttribute(key,el.getAttribute(attr));
+       el.setAttribute(attr,translateText(el.getAttribute(key),lang.value));
+     }));
+   }
+ }
+ function translateControls(){
+   const L=lang.value;
+   const labels={
+    pt:['♿ Acessibilidade','Acessibilidade','🎨 Tema','☀️ Claro','🌙 Escuro','🔠 Tamanho da fonte','Normal','Grande','Muito grande','🅰️ Estilo da letra','Padrão','Serifada','Leitura facilitada','🌐 Idioma','◐ Alto contraste','↺ Restaurar','As preferências ficam salvas neste navegador.','🎨 Personalização da página','Paleta de cores','Cor de fundo da página','Cor de destaque'],
+    en:['♿ Accessibility','Accessibility','🎨 Theme','☀️ Light','🌙 Dark','🔠 Font size','Normal','Large','Extra large','🅰️ Font style','Default','Serif','Easy reading','🌐 Language','◐ High contrast','↺ Reset','Your preferences are saved in this browser.','🎨 Page customization','Color palette','Page background color','Accent color'],
+    es:['♿ Accesibilidad','Accesibilidad','🎨 Tema','☀️ Claro','🌙 Oscuro','🔠 Tamaño de fuente','Normal','Grande','Muy grande','🅰️ Tipo de letra','Predeterminado','Serif','Lectura fácil','🌐 Idioma','◐ Alto contraste','↺ Restablecer','Las preferencias se guardan en este navegador.','🎨 Personalización de la página','Paleta de colores','Color de fondo de la página','Color de destaque']
+   }[L];
+   toggle.textContent=labels[0];document.getElementById('accessTitle').textContent=labels[1];
+   document.getElementById('accessThemeLabel').textContent=labels[2];theme.options[0].textContent=labels[3];theme.options[1].textContent=labels[4];
+   document.getElementById('accessSizeLabel').textContent=labels[5];size.options[0].textContent=labels[6];size.options[1].textContent=labels[7];size.options[2].textContent=labels[8];
+   document.getElementById('accessFontLabel').textContent=labels[9];font.options[0].textContent=labels[10];font.options[1].textContent=labels[11];font.options[2].textContent=labels[12];
+   document.getElementById('accessLangLabel').textContent=labels[13];contrast.textContent=labels[14];document.getElementById('accessReset').textContent=labels[15];document.getElementById('accessHelp').textContent=labels[16];
+   document.getElementById('accessPersonalTitle').textContent=labels[17];document.getElementById('accessPaletteLabel').textContent=labels[18];document.getElementById('accessBgLabel').textContent=labels[19];document.getElementById('accessAccentLabel').textContent=labels[20];
+   const paletteLabels={
+    pt:['🔵 Azul profissional','🟢 Verde industrial','🟣 Roxo moderno','🟠 Laranja energia','🌸 Rosa vibrante','Personalizada'],
+    en:['🔵 Professional blue','🟢 Industrial green','🟣 Modern purple','🟠 Energy orange','🌸 Vibrant pink','Custom'],
+    es:['🔵 Azul profesional','🟢 Verde industrial','🟣 Morado moderno','🟠 Naranja energía','🌸 Rosa vibrante','Personalizada']
+   }[L];
+   Array.from(palette.options).forEach((o,i)=>o.textContent=paletteLabels[i]);
+   document.documentElement.lang=L==='en'?'en':L==='es'?'es':'pt-BR';
+ }
+ const palettes={
+  blue:{bg:'#f2f7ff',panel:'#ffffff',accent:'#315fce',accent2:'#087f8c'},
+  green:{bg:'#effaf5',panel:'#ffffff',accent:'#16805d',accent2:'#0b8f88'},
+  purple:{bg:'#f7f2ff',panel:'#ffffff',accent:'#7542c8',accent2:'#a044b7'},
+  orange:{bg:'#fff7ed',panel:'#ffffff',accent:'#c65b13',accent2:'#d97706'},
+  pink:{bg:'#fff2f8',panel:'#ffffff',accent:'#c0267a',accent2:'#9d4edd'},
+  custom:{bg:'#f2f7ff',panel:'#ffffff',accent:'#315fce',accent2:'#087f8c'}
+ };
+ function setPalette(key,save=true){
+   const p=palettes[key]||palettes.blue;
+   pageBg.value=p.bg;accent.value=p.accent;palette.value=key;
+   applyColors(save);
+ }
+ function applyColors(save=true){
+   const bg=pageBg.value||'#f2f7ff', ac=accent.value||'#315fce';
+   body.style.setProperty('--user-bg',bg);
+   body.style.setProperty('--user-panel','#ffffff');
+   body.style.setProperty('--user-accent',ac);
+   body.style.setProperty('--user-blue',ac);
+   body.style.setProperty('--accent',ac);
+   body.style.setProperty('--blue',ac);
+   body.classList.add('custom-colors');
+   if(save)persist();
+ }
+ function persist(){
+   try{localStorage.setItem('indusense-access-v5',JSON.stringify({theme:theme.value,size:size.value,font:font.value,lang:lang.value,contrast:contrast.getAttribute('aria-pressed')==='true',palette:palette.value,bg:pageBg.value,accent:accent.value}));}catch(e){}
+ }
+ function apply(){
+   body.classList.toggle('access-light',theme.value==='light');body.classList.toggle('access-dark',theme.value==='dark');
+   body.classList.toggle('access-large',size.value==='large');body.classList.toggle('access-xlarge',size.value==='xlarge');
+   body.classList.toggle('access-font-serif',font.value==='serif');body.classList.toggle('access-font-dyslexic',font.value==='dyslexic');
+   body.classList.toggle('access-high-contrast',contrast.getAttribute('aria-pressed')==='true');
+   persist();
+ }
+ try{
+   const s=JSON.parse(localStorage.getItem('indusense-access-v5')||localStorage.getItem('indusense-access-v4')||'null');
+   if(s){
+     theme.value=s.theme||'light';size.value=s.size||'normal';font.value=s.font||'normal';lang.value=s.lang||'pt';contrast.setAttribute('aria-pressed',String(!!s.contrast));
+     if(s.palette){palette.value=s.palette;pageBg.value=s.bg||palettes[s.palette]?.bg||'#f2f7ff';accent.value=s.accent||palettes[s.palette]?.accent||'#315fce';}
+     else {palette.value='blue';pageBg.value='#f2f7ff';accent.value='#315fce';}
+   }
+ }catch(e){}
+ toggle.addEventListener('click',()=>{const open=panel.classList.toggle('open');toggle.setAttribute('aria-expanded',String(open));});
+ [theme,size,font].forEach(el=>el.addEventListener('change',apply));
+ lang.addEventListener('change',()=>{translateAll(document.body);translateControls();apply();});
+ palette.addEventListener('change',()=>{if(palette.value==='custom'){pageBg.focus();}else setPalette(palette.value);});
+ pageBg.addEventListener('input',()=>{palette.value='custom';applyColors();});
+ accent.addEventListener('input',()=>{palette.value='custom';applyColors();});
+ contrast.addEventListener('click',()=>{contrast.setAttribute('aria-pressed',String(contrast.getAttribute('aria-pressed')!=='true'));apply();});
+ document.getElementById('accessReset').addEventListener('click',()=>{
+   theme.value='light';size.value='normal';font.value='normal';lang.value='pt';contrast.setAttribute('aria-pressed','false');
+   palette.value='blue';pageBg.value=palettes.blue.bg;accent.value=palettes.blue.accent;
+   body.classList.remove('custom-colors');body.style.removeProperty('--user-bg');body.style.removeProperty('--user-panel');body.style.removeProperty('--user-accent');body.style.removeProperty('--user-blue');body.style.removeProperty('--accent');body.style.removeProperty('--blue');
+   translateAll(document.body);translateControls();applyColors(false);apply();
+ });
+ const observer=new MutationObserver(records=>{
+   for(const r of records)r.addedNodes.forEach(n=>{
+     if(n.nodeType===Node.TEXT_NODE)translateNode(n);
+     else if(n.nodeType===Node.ELEMENT_NODE)translateAll(n);
+   });
+ });
+ observer.observe(document.body,{subtree:true,childList:true});
+ translateAll(document.body);translateControls();
+ if(body.classList.contains('custom-colors')===false)applyColors(false);
+ apply();
+})();
+</script>
+
+
+
+
+
+<style id="readability-and-charts-upgrade">
+/* Login: contraste reforçado nos dois temas */
+.login-visual{color:#f8fafc}
+.login-visual .eyebrow{color:#8ee8d0!important;font-weight:800;letter-spacing:.12em}
+.login-visual h1{color:#ffffff!important;text-shadow:0 2px 18px #0004}
+.login-visual p{color:#e2eaf5!important}
+.login-visual .visual-footer{color:#c0cee0!important}
+.login-visual .brand{color:#ffffff!important}
+.login-panel{background:#ffffff}
+.login-box h2{color:#111827!important;font-weight:800}
+.login-box .subtitle{color:#475569!important;line-height:1.6}
+.login-box .field label{color:#263449!important;font-weight:750}
+.login-box .field input{background:#ffffff!important;color:#111827!important;border:1.5px solid #94a3b8!important}
+.login-box .field input::placeholder{color:#64748b!important;opacity:1}
+.login-box .field input:focus{border-color:#315fc4!important;box-shadow:0 0 0 4px #315fc422!important}
+.login-box .demo-note{background:#f1f5f9!important;border:1px solid #cbd5e1!important;color:#334155!important}
+.login-box .error{color:#b91c1c!important;font-weight:700}
+.login-box .primary{background:linear-gradient(100deg,#244fc0,#167caa)!important;color:#fff!important;box-shadow:0 7px 18px #244fc033}
+body.access-dark .login-panel{background:#0f1929!important}
+body.access-dark .login-box h2{color:#f8fafc!important}
+body.access-dark .login-box .subtitle{color:#cbd5e1!important}
+body.access-dark .login-box .field label{color:#dbeafe!important}
+body.access-dark .login-box .field input{background:#0b1423!important;color:#f8fafc!important;border-color:#52647d!important}
+body.access-dark .login-box .field input::placeholder{color:#a9bad1!important}
+body.access-dark .login-box .demo-note{background:#111b2e!important;color:#cbd5e1!important;border-color:#334766!important}
+
+/* Painel expandido: barras maiores, rótulos claros e leitura acessível */
+.machine.selected .machine-visuals{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.machine.selected .machine-visual-card{padding:20px;min-height:245px}
+.machine.selected .machine-visual-card h4{font-size:12px;color:#334155!important;letter-spacing:.06em}
+.machine.selected .bar-reading-row .visual-reading{font-size:34px;font-weight:850;color:#111827!important}
+.machine.selected .bar-reading-row .visual-reading small{font-size:14px;color:#475569!important}
+.machine.selected .bar-status{font-size:12px;padding:7px 11px}
+.machine.selected .bar-plain-language{min-height:36px;margin:0 0 12px;color:#334155;font-size:12px;font-weight:650;line-height:1.45}
+.machine.selected .simple-bar{height:32px;border-radius:10px;margin:12px 0 8px;background:linear-gradient(90deg,#bbf7d0 0%,#bbf7d0 45%,#fde68a 65%,#fecaca 100%);box-shadow:inset 0 1px 3px #0002;overflow:hidden}
+.machine.selected .simple-bar-fill{height:100%;border-radius:9px;box-shadow:0 2px 9px #0002;position:relative;z-index:1;opacity:.96}
+.machine.selected .bar-marker{top:-3px;height:38px;width:4px;z-index:3;box-shadow:0 0 0 2px #fff9}
+.machine.selected .bar-scale{font-size:11px;color:#475569;font-weight:600;gap:6px}
+.machine.selected .bar-scale strong{color:#172033;font-size:12px}
+.machine.selected .bar-explain{font-size:11px;line-height:1.45;color:#334155;gap:8px 13px;margin-top:16px}
+.machine.selected .bar-explain span{align-items:flex-start}
+.machine.selected .bar-explain .legend-dot{width:10px;height:10px;flex:0 0 10px;margin-top:2px}
+.machine.selected .machine-visual-card:first-child h4{color:#334155!important}
+body.access-light .machine.selected .bar-visual-card{background:linear-gradient(145deg,#fff,#f3f7ff)!important;border-color:#cbdaf0!important}
+body.access-light .machine.selected .bar-visual-card h4,
+body.access-light .machine.selected .bar-reading-row .visual-reading,
+body.access-light .machine.selected .bar-reading-row .visual-reading small,
+body.access-light .machine.selected .bar-plain-language,
+body.access-light .machine.selected .bar-scale,
+body.access-light .machine.selected .bar-scale strong,
+body.access-light .machine.selected .bar-explain{color:#172033!important}
+body.access-dark .machine.selected .bar-visual-card{background:linear-gradient(145deg,#17243a,#111b2e)!important;border-color:#334766!important}
+body.access-dark .machine.selected .bar-visual-card h4,
+body.access-dark .machine.selected .bar-reading-row .visual-reading,
+body.access-dark .machine.selected .bar-reading-row .visual-reading small,
+body.access-dark .machine.selected .bar-plain-language,
+body.access-dark .machine.selected .bar-scale,
+body.access-dark .machine.selected .bar-scale strong,
+body.access-dark .machine.selected .bar-explain{color:#edf4ff!important}
+body.access-dark .machine.selected .simple-bar{background:linear-gradient(90deg,#14532d 0%,#14532d 45%,#854d0e 65%,#7f1d1d 100%)}
+@media(max-width:1000px){
+ .machine.selected .machine-visuals{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .machine.selected .machine-visual-card{min-height:225px}
+}
+@media(max-width:600px){
+ .login-screen{grid-template-columns:1fr}
+ .login-visual{padding:30px 24px;gap:35px;min-height:390px}
+ .login-visual h1{font-size:clamp(34px,9vw,48px)}
+ .login-visual p{font-size:16px}
+ .login-panel{padding:35px 24px}
+ .machine.selected .machine-visuals{grid-template-columns:1fr}
+ .machine.selected .machine-visual-card{min-height:unset}
+ .machine.selected .bar-reading-row .visual-reading{font-size:31px}
+}
+</style>
+
+</body>
+</html>
